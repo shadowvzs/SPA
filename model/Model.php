@@ -8,10 +8,10 @@ class Model {
 	protected static $auth;
 
 	protected static $DATABASE = [
-		"HOST" => 'localhost',
-		"USER" => 'root',
-		"PASSWORD" => 'root',
-		"DATABASE" => "my_db"
+		"HOST" => 'localhost',//getenv('IP'),
+		"USER" => 'root',//getenv('C9_USER'),
+		"PASSWORD" => 'root',//'root',
+		"DATABASE" => "kovacscsaba"
 	];
 	protected static $PATTERN = [
 		'EMAIL' => '/^([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$)$/',

@@ -2,52 +2,29 @@
 spl_autoload_register(function ($class) {
     include './'.$class.'.php';
 });
-class Gallery extends Model {
+class Guestbook extends Model {
 
-    public static $TABLE_NAME = 'albums';
+  public static $TABLE_NAME = 'guestbook';
 	public static $HIDDEN = ['password'];
 	public static $validation = [];
-	public static $DIRECTORY = [
-		'IMAGE' => '/gallery/album/',
-		'THUMB' => '/test/img/gallery/mini/'
-	];
-    public static $INPUT_RULE = [
+  public static $INPUT_RULE = [
 		'id' => ['type'=>'INTEGER'],
-		'index' => ['type'=>'INTEGER'],
- 	];	
-	
-	//public static $AUTO_FILL = [
-		//'add' => [
-		//	'status' => 1,
-		//	'rank' => 1,
-		//]
- 	//];
-	
+    //'name' => ['type'=>'INTEGER'],
+    //'message' => ['type'=>'INTEGER'],
+ 	];
 
-	protected function index(){
+	protected function index($data){
 		$Auth = static::$auth;
-		$cond = $Auth['role'] > 0 ? ['1', '1'] : ['i.status = 1', 'a.status = 1'];
-		//role
-		$sql = "SELECT a.id as id, a.user_id as userId, a.title as title, a.description as description, a.created as created, i.mid as imageId, i2.path as coverImage 
-			FROM albums as a
-			LEFT JOIN 
-				(SELECT i.album_id as album_id, MAX(i.id) as mid 
-					FROM `images` as i 
-					WHERE ".$cond[0]." 
-					GROUP BY i.album_id
-				 ) as i 
-				 ON i.album_id = a.id
-			INNER JOIN images i2
-				ON i2.id = i.mid
-			WHERE ".$cond[1];
-		$albums = static::execQuery($sql);
-		$renderFunc = 'build';	
-		$container = '.album-box-container';
-		return $this->sendResponse([$albums, $container], $renderFunc);
+    $limit = 20;
+    $index = 0;
+		$guestbook = static::execQuery("SELECT id, user_id as userId, name, message, created, updated FROM `guestbook` WHERE status < ".($Auth['role']+1)." ORDER BY created DESC");
+  	$renderFunc = 'build';
+		$container = null;
+		return $this->sendResponse([$guestbook, $container], $renderFunc);
 	}
-	
+
 	protected function album($data=null){
-		
+
 		$id = $data['id'];
 		$index = isset($data['index']) ? $data['index'] : 0;
 		$Auth = static::$auth;
@@ -58,19 +35,19 @@ class Gallery extends Model {
 			FROM albums
 			WHERE ".$cond[0]
 		);
-		
+
 		$title = false;
 		foreach ($albums as $album) {
 			if ($album['id'] == $id) {
 				$title = $album['title'];
 			}
 		}
-		
+
 		if (!$title) {
 			return static::refuseData('Album not exist!');
 		}
 		// if no join we can get index in query like this
-		//, @curRow := @curRow + 1 AS index 
+		//, @curRow := @curRow + 1 AS index
 		//JOIN (SELECT @curRow := 0) r
 		$images = static::execQuery("SELECT u.name as name, i.id as id, i.status as status, i.album_id as albumId, i.user_id as userId, i.path as path, i.description as description, i.created as created, i.updated as updated, i.album_id as parentId
 			FROM images as i
@@ -80,15 +57,15 @@ class Gallery extends Model {
 		$len = count($images);
 		for ($i=0;$i < $len; $i++){
 			$images[$i]['index'] = $i+1;
-		} 
+		}
 		$data = [ ['title'=>$title], $albums, $images];
 		// we send every data with a single response
-		// to multiple render function, se we can update 
+		// to multiple render function, se we can update
 		// multiple element with 1 response
 		$multicall = [];
 		$multicall[] = [$data, 'build'];
-		
-		// we send images from selected album to popUp.dataList, 
+
+		// we send images from selected album to popUp.dataList,
 		// so don't need request for image next/previous in popUp window
 		// Note: only YouTube videos and images use the popUp window
 		$multicall[] = [$images, $index,'setPopUpData'];
@@ -97,12 +74,12 @@ class Gallery extends Model {
 		if ($index > 0) {
 			$multicall[] = ['image/'.$index, true,'popUpRender'];
 		}
-	
+
 		return $this->sendResponse($multicall, 'multicall');
-	}	
+	}
 
 }
 
-$gallery = new Gallery();
+$guestbook = new Guestbook();
 
 ?>

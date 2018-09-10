@@ -2,30 +2,25 @@
 spl_autoload_register(function ($class) {
     include './'.$class.'.php';
 });
-class News extends Model {
-	
-    public static $TABLE_NAME='news';
-    public static $INPUT_RULE = [
-	//	'id' => ['type'=>'INTEGER'],
-		//'title' => ['require', 'type' => 'NAME_HUN', 'length' => [5, 50]],
-		//'country' => ['type' => 'NAME_HUN', 'length' => [5, 50]],
- 	];	
+class Guest extends Model {
+
+  public static $TABLE_NAME='guests';
 	public static $AUTO_FILL = [
 		'add' => [
 			'status' => 1,
 		]
  	];
-	
+
 	public function index($data=null) {
 		$role = static::$auth['role']+1;
-		$sql = "SELECT n.id, u.name, n.title, n.message, n.created, n.updated FROM `news` as n LEFT JOIN `users` as u on n.user_id = u.id WHERE n.status <= $role ORDER BY n.created DESC";
+		$sql = "SELECT n.id, u.name, n.title, n.message, n.created, n.updated FROM `guests` as n LEFT JOIN `users` as u on n.user_id = u.id WHERE n.status <= $role ORDER BY n.created DESC";
 		$result = static::execQuery($sql);
 		// i hope this make it asier to understand
 		// btw the $arg will be spread in js, so renderFun(...arg)
 		$arg = [$result, 'created'];
 		return $this->sendResponse($arg);
 	}
-	
+
 	public function add($data=null) {
 
 		if (static::$auth['role'] < 1) {
@@ -51,9 +46,9 @@ class News extends Model {
 			return static::refuseData('Nem sikerült lementeni!');
 		}
 	}
-	
+
 	public function delete($data=null) {
-		if (empty($data['id'])){ return static::refuseData('Hiba történt!'); } 
+		if (empty($data['id'])){ return static::refuseData('Hiba történt!'); }
 		if (static::deleteById($data['id'])) {
 			return $this->sendResponse();
 		}else{
@@ -63,4 +58,4 @@ class News extends Model {
 
 }
 
-$news = new News();
+$guest = new Guest();
