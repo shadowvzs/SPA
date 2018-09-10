@@ -4,10 +4,11 @@
 		<title>JS SPA - MVC</title>
 		<meta charset="UTF-8">
 		<meta name="description" content="Atm moment only test page for SPA">
-		<meta name="keywords" content="HTML,CSS,JavaScript,JSON,Ajax,SPA,ES6">
+		<meta name="keywords" content="HTML,CSS,JavaScript,JSON,Ajax,SPA">
 		<meta name="author" content="Varga Zsolt">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet" href="/test/css/index.css" type="text/css"/>
+	<script type="text/javascript" src="/test/events.json"></script>		
 	</head>
 	<body>
 		<div class="grid" id="App">
@@ -67,8 +68,6 @@
 	
 	<!--
 	maybe i use this later with windows.css
-	but at moment stil missing the administation part
-	
 	<div class="modal-layer blck_trnspnt_bg">
 		<div id="AddNews" class="window"><div class="header">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Új hír szerkesztése</b><div class="close" onclick="core.closeModalWindow('#AddNews');">&times;</div></div> 
 			<div class="content">
@@ -81,6 +80,46 @@
 	</div>
 	-->
 	<link rel="stylesheet" href="/test/css/calendar.css" type="text/css" />
-	<script src="/test/js/App.js" type="text/javascript"></script> 		
+	<script type="text/javascript" src="/test/js/calendar.js"></script>
+<script src="/test/js/App.js" type="text/javascript"></script> 		
+<script>
+setup = {
+	callback: function(date, event) { 
+		var str = 'Ths is a callback for date '+date+'\n\n';
+		if (event) {
+			for (e of event) {
+				str += 'Event: '+e.title+'\nMessag: '+e.message+'\nDate: '+e[this.data.key]+'\n\n';
+			}
+		}
+		console.log(str);
+	},
+	// if we select a day then will be placed in this input
+	output: '#output',
+	// start with day view mod (0-3)
+	viewMode: 0,
+	// limit on years
+	range: {
+		min: 2000,
+		max: 2143,
+	},
+	// calendar place and event when appear
+	show: {
+		event: ['click', '.more.button.col-gray'],
+		position: 'middle',
+		//position: '#App header',
+	},
+	// data and event date key
+	data: {
+		key: 'created',
+		list: JSON.parse(data)
+	}
+};
+
+
+
+setTimeout(function(){
+	//var c = new Calendar(setup);
+}, 3000);
+</script>
 	</body>
 </html>
