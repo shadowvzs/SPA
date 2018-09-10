@@ -397,7 +397,7 @@ console.log('ajax data', data, url);
 					function youTubePlaylistHandler (data) {
 						var playlist = local.playList;
 						if (!data.items) { return console.log('no item in data'); }
-						data.items.forEach(function(e){
+						data.items.forEach(e => {
 							playlist.push({
 								id: e.id,
 								title: e.snippet.title,
@@ -417,7 +417,7 @@ console.log('ajax data', data, url);
 						var i = 0, videoList = local.videoList[d.id] || []
 							index = d.index || 0;
 						if (!data.items) { return console.log('no items property on data'); }
-						data.items.forEach(function(e){
+						data.items.forEach(e => {
 							i++;
 							videoList.push({
 								id: e.contentDetails.videoId,
@@ -884,7 +884,7 @@ console.log('ajax data', data, url);
 			videoPlaylist(d){
 				console.log(d);
 				let str = "";
-				d.forEach(function(e){
+				d.forEach(e => {
 					str += `<div class="video-box">
 						<a href="/video/playlist/${e.id}" title="${e.title} playlist">
 							<img src="${e.img}" alt="${e.title} cover">
@@ -896,7 +896,7 @@ console.log('ajax data', data, url);
 			videoList(d){
 				console.log(d);
 				let str = "";
-				d.forEach(function(e){
+				d.forEach(e => {
 					str += `<div class="video-box">
 								<a href="popup:youtube/${e.index}" title="${e.title} playlist">
 									<img src="${e.img}" alt="${e.title} cover">
@@ -907,7 +907,7 @@ console.log('ajax data', data, url);
 			},
 			albumList(d,c) { 
 				let str = "";
-				d.forEach(function(e){
+				d.forEach(e => {
 					str += `<div class='album-box'>
 						<a href='/gallery/album/${e.id}' title='${e.title} album: ${e.description}'>
 							<img src='${THUMBNAIL_PATH+e.coverImage}' alt='${e.title}'>
@@ -919,10 +919,10 @@ console.log('ajax data', data, url);
 			},
 			albumImageList(data) { 
 				let [selAlbum, albumList, imageList] = data, albums = "", images = "";
-				albumList.forEach(function(a){
+				albumList.forEach(a => {
 					albums += `<li><a href='/gallery/album/${a.id}' title='${a.title}'>${a.title}</a></li>`;
 				});
-				imageList.forEach(function(i){
+				imageList.forEach(i => {
 					images += `<div class='image-box'>
 						<a href='popup:image/${i.index}' title='${i.description}'>
 							<img src='${THUMBNAIL_PATH+i.path}' alt='${i.description}'>
@@ -1167,9 +1167,9 @@ console.log('ajax data', data, url);
 			if (pageData.component) {
 				var pageComponent = pageData.component, component;
 				if (!current.component) { current.component = {}; }
-				Object.keys(pageComponent).forEach(function(key){
+				Object.keys(pageComponent).forEach(key => {
 					component = pageComponent[key];
-					setTimeout(function(){
+					setTimeout(() => {
 						current.component[key] = new component['constructor'](component, ajax);
 					}, 1);
 				});
@@ -1184,7 +1184,7 @@ console.log('ajax data', data, url);
 			}
 			//remove
 			if (component) {
-				Object.keys(component).forEach(function(e){
+				Object.keys(component).forEach(e => {
 					if (component[e].remove) {
 						component[e].remove();
 						console.log('remove '+e+' component from page data');
@@ -1215,7 +1215,7 @@ console.log('ajax data', data, url);
 			},
 			multicall(data){
 				var renderFunc, s;
-				data.forEach(function(e){
+				data.forEach(e => {
 					renderFunc = e.pop();
 					if (renderFunc === "build") { 
 						console.log(e);
@@ -1671,7 +1671,7 @@ console.log('ajax data', data, url);
 					return '<br>No event on this date';
 				}
 				var str = "";
-				list.forEach(function (e, i) {
+				list.forEach( (e, i) => {
 					str += "<div class='bubble'><h3 data-event="+i+">"+e.title+"</h3><p data-event="+i+">"+e.message+"</p><time>"+e[dateKey]+"</time></div>";
 				});
 				return str;
@@ -2022,7 +2022,7 @@ console.log('ajax data', data, url);
 		function eventFormVisibility() {
 			let access = Auth.role > 0;
 			console.log(access);
-			Object.keys(eventForm).forEach(function(e){
+			Object.keys(eventForm).forEach(e => {
 				eventForm[e].style.display = (e === 'list' || access) ? 'inline-block' : 'none';
 			});
 		}
