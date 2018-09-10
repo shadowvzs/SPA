@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Apr 02, 2018 at 04:09 PM
+-- Generation Time: Apr 24, 2018 at 09:09 PM
 -- Server version: 5.7.20-0ubuntu0.16.04.1
 -- PHP Version: 7.0.22-0ubuntu0.16.04.1
 
@@ -61,6 +61,25 @@ INSERT INTO `albums` (`id`, `status`, `user_id`, `title`, `description`, `create
 (19, 1, 1, '2016 Jan. böjt téma', '2016 Januári (4-24) böjti téma', '2016-01-08 17:49:19', NULL),
 (20, 1, 1, 'Keresztség - 2016', 'A 2016 májusi keresztség képei', '2016-06-02 14:28:12', NULL),
 (21, 1, 1, 'Magura Racatau', 'Kirándulás Magura Racataun 2016. Július', '2016-08-14 13:08:14', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `events`
+--
+
+CREATE TABLE `events` (
+  `id` int(11) UNSIGNED NOT NULL,
+  `status` tinyint(4) UNSIGNED NOT NULL DEFAULT '1',
+  `type` tinyint(4) UNSIGNED NOT NULL DEFAULT '1' COMMENT '0=sermon, 1 guest, 2 event, 3 page update',
+  `title` varchar(255) DEFAULT NULL,
+  `description` text,
+  `subject` int(11) DEFAULT NULL COMMENT 'depend on type',
+  `start_at` datetime DEFAULT NULL,
+  `end_at` datetime DEFAULT NULL,
+  `created` datetime NOT NULL,
+  `updated` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
 
@@ -429,97 +448,97 @@ INSERT INTO `images` (`id`, `status`, `album_id`, `user_id`, `path`, `descriptio
 
 CREATE TABLE `news` (
   `id` int(11) NOT NULL,
-  `writer` int(11) NOT NULL,
-  `wdate` varchar(20) COLLATE utf8_hungarian_ci NOT NULL,
+  `status` tinyint(4) NOT NULL DEFAULT '1',
+  `user_id` int(11) NOT NULL,
   `title` varchar(100) COLLATE utf8_hungarian_ci NOT NULL,
-  `txt` varchar(512) COLLATE utf8_hungarian_ci NOT NULL,
-  `showcat` tinyint(4) NOT NULL DEFAULT '1'
+  `message` varchar(512) COLLATE utf8_hungarian_ci NOT NULL,
+  `created` datetime NOT NULL,
+  `updated` datetime DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_hungarian_ci;
 
 --
 -- Dumping data for table `news`
 --
 
-INSERT INTO `news` (`id`, `writer`, `wdate`, `title`, `txt`, `showcat`) VALUES
-(1, 1, '2011.11.27 10:13:06', 'Vendégek', 'November 27 - Vasárnap vendégeink lesznek.\r\nRészletek a Vendégek menüpont alatt.', 1),
-(2, 1, '2011.11.28 15:40:48', 'Regisztráció', 'kicsit átfutottam a regisztrációt az oldalra, volt egy kis bibi tegnap, ma már megy jól.', 1),
-(4, 1, '2011.12.09 15:37:32', 'Most vasárnap', 'Nagy Péter jön most vasárnap reggel 10:00 és délután 15:00.', 1),
-(5, 8, '2011.12.21 19:51:30', 'Karácsony', 'Áldott,békés,boldog Karácsonyt kívánunk mindenkinek!', 1),
-(6, 1, '2012.01.01 09:03:49', '2012', 'Legyen egy áldott, boldog új éve mindenkinek!', 1),
-(7, 8, '2012.01.01 20:03:38', 'Vendég', 'Vasárnap(jan. 8) 16 órától vendégünk lesz Bálint Gyula Várpalotáról,mindenkit várunk szeretettel!', 1),
-(8, 1, '2012.01.20 16:47:45', 'Nagy Péter', 'Nehány tanítás Nagy Pétertõl, feltöltve a Felvételek/Hangfelvételeknél', 1),
-(9, 1, '2012.04.11 18:29:48', '2012. 04. 22', '22. -én 10 órától kezdôdik az alkalom', 1),
-(10, 1, '2012.04.22 11:28:26', 'Május 5.', 'Berkes Sándor itt lesz május 5-6 -án, özönvíz a téma', 1),
-(11, 8, '2012.05.30 16:03:41', '', 'Üdvözlünk honlapunkon!', 1),
-(12, 1, '2012.06.21 17:01:13', 'Vendég', 'Lesz vendég vasárnap, részletek a <b>Vendégek és Programok</b>', 1),
-(13, 1, '2012.07.02 17:15:53', 'Július 7.', 'Lesz egy meglepetés vendég család vasárnap.', 1),
-(14, 1, '2012.07.08 20:44:16', 'Július 15 és 22', 'Július 15 és 22-én délelôtt 10 óratól kezdôdik az alkalom', 1),
-(15, 1, '2012.07.22 14:03:42', 'Július 29.', 'Július 29-én szintén 10 órától kezdôdik az istentisztelet.', 1),
-(16, 1, '2012.08.04 20:10:55', 'Videók', 'picit rendezve a youtubeos dícséretek <a href=http://gyozelem.ro/index.php?page=5 target=_blank> Felvételek kategóriában</a>', 1),
-(18, 1, '2012.09.10 15:04:52', 'Bizonyságok', 'Két átélés került a Bizonyságok szekcióba. <a href=\'http://gyozelem.ro/index.php?page=14\' target=\'_blank\'> Klikk ide a megtekintéshez</a>', 1),
-(19, 1, '2012.11.16 13:19:21', 'Szombat', 'November 17.-én Bálint Gyula lesz vendégünk, 18:00 órától', 1),
-(20, 1, '2012.12.02 19:34:01', 'December 15-17.', 'Gyülekezetben lesz gyerekfoglalkozás, lesz kézimunka, zene, tánc, bábszínház és még sok más 3 év feletti gyerekeknek(ingyenes természetesen). December 15, 16. 15:00 órakor és 17.-én 16:00 órakor.', 1),
-(21, 1, '2012.12.24 12:19:57', 'Dec. 25.', 'December 25.-én kedden is lesz alkalom, dél után 4 órától.\r\nBékés, áldott és boldog karácsonyt mindenkinek!', 1),
-(22, 1, '2012.12.30 12:43:01', 'Dec. 31 - Szilveszter', 'Szilveszter 20:00 órától lesz az alkalom, lesznek programok és aki tudd az hozhat ételt (üdítõ és kenyér bizyosítva). \r\nMindenkit szertettel várunk! :)', 1),
-(23, 1, '2013.01.02 18:42:27', 'Szilveszter', 'A szilveszteri alkalomról készült képeket <a href=http://gyozelem.ro/index.php?page=1&id=9><b>itt</b></a> lehet megnézni. Boldog, áldott új évet mindenkinek!', 1),
-(24, 1, '2013.01.13 17:55:20', 'Ima és böjt', 'Agapé, Filadelfia, Bárka és a mi gyülink böjt és ima januárt hírdet, csütörtönként 19:00 órától.\r\n<br>\r\nMúlt csütörtök felvételek (.mp3):\r\nBudai Béla és Pokorny Istvánnal - útmutató (.MP3) <a href="https://docs.google.com/uc?id=0B2Xnb7P1IwsFUjR0WEp4VEdSejQ&export=download" target="_blank"> <b>Letöltés ITT</b> </a>\r\n<br>Kiss Zsolt - a böjt <a href="https://docs.google.com/file/d/0B2Xnb7P1IwsFU3hqeXFrWnk5Rnc/edit?pli=1" target="_blank"> <b>Letöltés ITT </b></a>', 1),
-(25, 1, '2013.01.28 16:10:21', 'Ne felejtsétek el...', 'Most csütörtökön 19:00-kor lesz az utolsó közöz alkalom (reméljük lesz folytatása persze, csak még nem tudjuk mikor). (Dunarea utca 13-as szám)\r\n\r\nMindenkinek nagyon ajánlom, hogy jöjjön el mert nagyon jó alkalmak voltak eddig is!!!', 1),
-(26, 1, '2013.03.24 19:19:04', 'Következô heti program', 'Március 28, 29, 30, 31.<br>\r\nCsütörtökön 19:00 - Imaóra<br> Pénteken 15:00 - Gyerek programok (sok szerettet várunk minden gyereket)<br> Szombaton 20:00 - Imaéjszaka<br> Vasárnap 16:00 - Alkalom', 1),
-(27, 1, '2013.04.10 15:51:30', 'Most vasárnap', 'Most vasárnap Cselovszki Attila - evangélista lesz a vendégünk, mindenkit szeretettel várunk!', 1),
-(29, 1, '2013.05.02 17:25:25', 'Május 5.', 'Keresztség lesz, mindenkit szeretettel várunk :)\r\n\r\nVendégünk lesz Boros Gyula, a Bárka gyülekezetbôl.', 1),
-(30, 1, '2013.05.06 12:02:38', 'Kép feltöltés', 'A keresztségrôl készült képek fel vannak töltve. <a href=\'http://gyozelem.ro/index.php?page=1&id=10\'> ITT </a>', 1),
-(31, 1, '2013.05.16 18:54:52', 'Képek (Yun)', 'Nehány kép felkerült a Yun (Jün) testvér látogatásáról a nagyváradi sportcsarnokban. <a href=\'http://gyozelem.ro/index.php?page=1&id=11\'> Album itt </a>, jó nézzelôdést! :)', 1),
-(32, 1, '2013.05.28 15:50:40', 'Igeversek', 'Napi igeversek a facebookon <a href=\'https://www.facebook.com/Igeversek\'> https://www.facebook.com/Igeversek </a>', 1),
-(33, 1, '2013.05.30 15:54:00', 'Június 4.', 'Június 4. - Kedden 18:00 órától Arnaldo Fernandez tart elôadást fiatal vagy leendô házasoknak nálunk (Dunarii 13.), mindenkit szerettel várunk!', 1),
-(34, 1, '2013.06.04 19:15:53', 'Szeretet nyelve', 'Feltöltve a Szeretet nyelve alaklom házastársaknak -ról néhánykép <a href =\'http://gyozelem.ro/index.php?page=1&id=12\' target=\'_blank\'><b><font color=\'#dd0000\'> Arnaldo Fernandez album</font></b></a>', 1),
-(35, 1, '2013.08.21 17:31:40', 'Szept. 1', '<b>Perjesi István</b> lesz a vendégünk szeptember elsején.<br>Mindenkit szeretettel várunk!', 1),
-(36, 1, '2013.09.22 19:53:21', 'Változás', 'Ezentúl reggel 8-tól van az imádkozás, a szombati imaéjszaka pedig a következô szombatra esik majd szóval október elsô szombatja.', 1),
-(37, 1, '2013.11.10 09:15:23', 'Vendég', 'Kiss József (Jocó) a debreceni Élet gyülekezet pásztora lesz vendégünk ma, 16:00 órái alkalmunkon.', 1),
-(39, 1, '2013.11.18 16:12:39', 'Konferencia', '<b>N&#337;i konferencia:</b><br> November 23.-án  10:00 óratól (Szombat) szeretttel várunk minden kedves feleséget az egész napos n&#337;i konferenciára  (felekezettöl függetlenül). Dunarii 13 szám, ', 1),
-(40, 1, '2013.12.21 17:48:51', 'Karácsony', 'Mindenkinek legyen békés, áldott karácsonya és ne feledkezzünk meg, hogy mit is ünneplünk!', 1),
-(41, 1, '2013.12.28 14:04:41', 'Szilveszter', 'Mindenkit szerettel várunk a <b>szilveszteri</b> alkalmunkra, hogy közösen, az Urat dícsérve lépjünk az új évbe! Kedden este 9 órától a gyüliben, mindenki hozzon egy kis ételt vagy sütit.', 1),
-(42, 1, '2014.01.01 16:33:38', 'Az új év itt van!', 'Szeretnénk kíváni áldott boldog új évet mindenkinek!', 1),
-(43, 1, '2014.02.17 14:22:58', 'Kiss Jocó', 'Vasárnap (Feb. 23)Kiss József lesz vendégünk 16:00 órai kezdettel.', 1),
-(44, 1, '2014.02.24 17:19:02', 'Felvétel', 'Egy újabb felvétel Kis József tanításaval az albumba (<a href=\'http://www.youtube.com/watch?v=DTAFM7_X5eI\'>video link</a>).', 1),
-(45, 1, '2014.04.06 10:44:54', 'Most vasárnap', 'Ma 16:00 órától Kiss József pásztor lesz nálunk, mindenkit szeretettel várunk!', 1),
-(46, 1, '2014.04.20 16:55:37', 'Vendég', 'Berkes Sándor tart elôadást április 27-én, 10:00 órától a gyülekezetben. <br>Téma: Teremtés, b&#369;neset, helyreállítás.<br>Mindenki szerettel várunk!', 1),
-(47, 1, '2014.05.25 10:43:03', 'Május 25', 'Május 25-ikén, 16:00 órától Kiss József lesz vendégünk! Mindenkit szerettel várunk!', 1),
-(48, 1, '2014.06.08 17:02:59', 'Változás!!', 'Ezentúl a vasárnapi alkalom 18:00 órától kezdôdik!', 1),
-(49, 1, '2014.08.21 17:37:07', '24.-e', 'Kiss József jön augusztus 24.-én 18:00 órától, mindenkit szeretettel várunk! ', 1),
-(51, 1, '2014.08.24 19:19:46', 'Visszaállás', 'Ezentúl újból vasárnap 16:00 órától van az alkalom. Keresztség lesz 31-én és 30-án imaéjszaka 9tôl.', 1),
-(52, 1, '2014.09.27 06:27:34', 'Bárka gyülekezet', 'Október 5. -én, 16:00 órától együtt a Bárka gyülekezettel lesz együtt áldott alkalmunk.', 1),
-(53, 1, '2014.10.19 17:12:47', 'Vasánap', 'Október 26. -án (vasárnap) Berkes Sándor lesz vendégünk, 10:00 órától. Mindenkit szeretettel várunk!', 1),
-(54, 1, '2014.12.25 18:37:21', 'Karácsony', 'Boldog, békés Karácsonyt mindenkinek!\r\n\r\n(nehány kép felkerült a 2014-es albumba)', 1),
-(55, 1, '2015.01.10 05:42:33', 'Vendég', 'Január 18. - Perjesi István lesz vendégünk, mindenkit szeretettel várunk!', 1),
-(56, 1, '2015.01.18 11:59:03', 'Harmadik böjt hét', 'Böjti hét harmadik hete következik akinek esetleg nincs meg a témáink itt megnézzheti <a href=\'http://gyozelem.ro/index.php?page=1&id=14&picid=191\'>Klikk ide</a>', 1),
-(57, 1, '2015.02.08 08:39:40', 'feb 8. vendégek', '<b>Ambrus Tibor, Kiss József</b> lesz a vendégeink, ma 16:00 órai kezdettel!<b> Mindenkit szerettel várunk!</b>', 1),
-(58, 1, '2015.03.22 19:49:28', 'Böjt', 'A következő héten böjt, mindenki aki tud válalni egy vagy több napot, azt kérem imádkozon az ország békességéért.', 1),
-(60, 1, '2015.04.12 18:17:14', '16. Csütörtök', 'Április 16.-án csütörtök 19:00 óratól egy hollandiai testvér lesz vendégünk, mindekit szeretettel várunk.', 1),
-(61, 1, '2015.04.26 20:02:34', 'Május 1.', 'Május 1: Péntek 10:00 órakor találkozunk...', 1),
-(62, 1, '2015.05.01 19:28:36', 'Képek', 'Május elsejés képek megnéhetök <a href=\'http://gyozelem.ro/album.php?id=16#25\'><b> itt </b></a>.', 3),
-(63, 1, '2015.05.07 18:46:19', 'Biblia', 'Ajánló: <a href=\'http://biblia.gyozelem.ro?book=40&chapter=1&vers=1#1\'> Online Biblia </a> (Mátétól - Jelenések könyvéig utalásokkal)', 1),
-(64, 1, '2015.05.26 12:36:22', 'Szalonta Máj. 31', 'Szalontán a Lacul Rosu utca, 14 szám alatt zenés istentiszteletet tartunk Május 31-én, vasárnap 17:00 órától, mindenkit szeretettel várunk!', 1),
-(65, 1, '2015.06.23 14:39:46', 'Július 5 - Gégény', 'Július 5-én 16 órai kezdettel vendégünk lesz Gégény Csaba és Éva, a Dünamisz Magyarország Evangélizáció szolgálói.Várunk szeretettel e különleges alkalomra, hívd el barátaidat is!', 1),
-(66, 1, '2015.08.23 08:52:05', 'Augusztus 23', 'Bálint Gyula lesz ma a vendégünk, mindenkit szeretettel várunk.', 1),
-(68, 1, '2015.09.07 17:59:06', 'Oldal frissítés', 'Az oldal egy új részleggel egészült ki.<br><a href=\'http://gyozelem.ro/articles.php\'><b>Cikkek</b></a>: bal oldalon található az album és felvételek között.', 1),
-(70, 1, '2015.09.20 18:19:36', 'Böjt a következő héten', 'Kérjük mindenkit, hogy böjtöljünk és imádkozunk az európai inváziós helyzetért, az országok vezetőiért, hogy legyen meg az Úr akarata.<br>\r\n<b>Szerdán, szombaton 19:00 közös alkalom.</b>\r\n<br>Mottó: <a href=\'http://biblia.gyozelem.ro/?book=29&chapter=2&vers=12&counter=6\'> Jóel 12-17</a>', 1),
-(72, 1, '2015.11.16 14:34:30', 'November 22', 'November 22. 16:00 órai kezdettel vendégünk lesz Perjesi István, a budapesti Agapé gyülekezetből.', 1),
-(73, 1, '2015.12.02 14:09:35', 'December 6', 'December 6. 16:00 órai kezdettel vendégünk lesz Boros Gyula, a Bárka gyülekezetből.', 1),
-(74, 1, '2015.12.24 19:01:11', 'Karácsony', 'Békés, boldog Karácsonyt kívánok mindenkinek!', 1),
-(75, 1, '2015.12.31 18:14:18', '2016', 'Aldott, boldog uj evet kivanunk 2016 -os evre!', 1),
-(76, 1, '2016.01.08 18:11:53', 'Böjt', 'Január 4-24 közötti böjti témák <a href=\'http://gyozelem.ro/album.php?id=19#1\'> itt </a> találhatóak meg. \r\nJak 2:20b - "hogy a hit cselekedetek nélkül megholt?"\r\n22b - " cselekedetekből lett teljessé a hit;"', 1),
-(77, 1, '2016.01.08 18:14:09', 'Böjt', 'Január 4-24 közötti böjti témák  <a href=\'http://gyozelem.ro/album.php?id=19#1\'>itt</a>  találhatóak meg.<br> <b>Jak 2:20b</b> - <i>"hogy a hit cselekedetek nélkül megholt?"</i> <br><b>22b</b> - <i>" cselekedetekből lett teljessé a hit;"</i>', 1),
-(80, 1, '2016.02.13 07:16:38', 'Február 21', 'Február 21. -én 10:00 órától <b>Perjesi István</b> tesvérünk lesz vendégünk a budapesti Agapé gyülekezetből.<br><br> Mindenkit szerettel várunk egésznapos alkalmunkra!', 1),
-(81, 1, '2016.02.25 08:18:24', 'Felvétel', 'A Perjesi István február 21.-i szolgálatáról készült felvétel a <a href=\'http://gyozelem.ro/video.php#2\'> <b>Felvételek</b> </a> oldalon tekinthető meg.', 1),
-(82, 1, '2016.03.27 11:03:13', 'Húsvét', 'Áldott Húsvétot kívánunk minden család számára!<br><br>ne felejtsük el: <br><b>Jézus ma is él és Úr!</b>', 1),
-(83, 1, '2016.04.26 15:49:53', 'Május 15', 'Május 15.-én vendégünk lesz Berkes Sándor. Az alkalom egész napos lesz és 10 órakor kezdődik, majd ebédszünet után délután folytatodik.<br>\r\nVárunk szeretettel mindenkit!', 1),
-(84, 1, '2016.09.18 16:36:03', 'Szeptember 25.', '<b>Ambrus Tibor</b> lesz vendégünk szeptember 25.-én és egy <b>Fülöp szigeti pásztor</b>ral. <br>mindenkit szeretettel várunk!', 1),
-(85, 1, '2016.10.08 03:10:58', 'Október 9', 'Október 9. Perjesi István lesz vendégünk 16:00 órától, mindenkit szeretettel várunk!', 1),
-(86, 1, '2017.03.24 19:55:46', 'Március 26', 'Vasárnap (26-án) Deli Vilmos lesz vendégünk 16:00 -tól.<br> \r\nMindenkit szeretettel várunk!', 1),
-(87, 1, '2017.06.04 08:10:22', 'Alkalom', 'Ma 18:00 órától van az alkalom.', 1),
-(88, 1, '2017.07.23 20:46:16', 'Augusztus 6.', 'Augusztus 6. <b>Berkes Sándor</b> lesz vendégünk 10:00 órától majd szünet és folytatás 14:00 fele egy másik temával, mindenkit szeretettel várunk!', 1),
-(89, 1, '2017.10.20 16:12:28', 'Október 29.', 'Pokorny István lesy vendégünk október 29 -én.<br>Mindenkit szeretettel várunk!', 1),
-(90, 1, '2017.11.07 13:43:19', 'November 12.', 'Perjesi István lesz a vendégünk, mindenkit szeretettel várunk 16:00 -ra!', 1);
+INSERT INTO `news` (`id`, `status`, `user_id`, `title`, `message`, `created`, `updated`) VALUES
+(2, 1, 1, 'Regisztráció', 'kicsit átfutottam a regisztrációt az oldalra, volt egy kis bibi tegnap, ma már megy jól.', '2011-11-28 15:40:48', NULL),
+(4, 1, 1, 'Most vasárnap', 'Nagy Péter jön most vasárnap reggel 10:00 és délután 15:00.', '2011-12-09 15:37:32', NULL),
+(5, 1, 8, 'Karácsony', 'Áldott,békés,boldog Karácsonyt kívánunk mindenkinek!', '2011-12-21 19:51:30', NULL),
+(6, 1, 1, '2012', 'Legyen egy áldott, boldog új éve mindenkinek!', '2012-01-01 09:03:49', NULL),
+(7, 1, 8, 'Vendég', 'Vasárnap(jan. 8) 16 órától vendégünk lesz Bálint Gyula Várpalotáról,mindenkit várunk szeretettel!', '2012-01-01 20:03:38', NULL),
+(8, 1, 1, 'Nagy Péter', 'Nehány tanítás Nagy Pétertõl, feltöltve a Felvételek/Hangfelvételeknél', '2012-01-20 16:47:45', NULL),
+(9, 1, 1, '2012. 04. 22', '22. -én 10 órától kezdôdik az alkalom', '2012-04-11 18:29:48', NULL),
+(10, 1, 1, 'Május 5.', 'Berkes Sándor itt lesz május 5-6 -án, özönvíz a téma', '2012-04-22 11:28:26', NULL),
+(11, 1, 8, '', 'Üdvözlünk honlapunkon!', '2012-05-30 16:03:41', NULL),
+(12, 1, 1, 'Vendég', 'Lesz vendég vasárnap, részletek a <b>Vendégek és Programok</b>', '2012-06-21 17:01:13', NULL),
+(13, 1, 1, 'Július 7.', 'Lesz egy meglepetés vendég család vasárnap.', '2012-07-02 17:15:53', NULL),
+(14, 1, 1, 'Július 15 és 22', 'Július 15 és 22-én délelôtt 10 óratól kezdôdik az alkalom', '2012-07-08 20:44:16', NULL),
+(15, 1, 1, 'Július 29.', 'Július 29-én szintén 10 órától kezdôdik az istentisztelet.', '2012-07-22 14:03:42', NULL),
+(16, 1, 1, 'Videók', 'picit rendezve a youtubeos dícséretek <a href=http://gyozelem.ro/index.php?page=5 target=_blank> Felvételek kategóriában</a>', '2012-08-04 20:10:55', NULL),
+(18, 1, 1, 'Bizonyságok', 'Két átélés került a Bizonyságok szekcióba. <a href=\'http://gyozelem.ro/index.php?page=14\' target=\'_blank\'> Klikk ide a megtekintéshez</a>', '2012-09-10 15:04:52', NULL),
+(19, 1, 1, 'Szombat', 'November 17.-én Bálint Gyula lesz vendégünk, 18:00 órától', '2012-11-16 13:19:21', NULL),
+(20, 1, 1, 'December 15-17.', 'Gyülekezetben lesz gyerekfoglalkozás, lesz kézimunka, zene, tánc, bábszínház és még sok más 3 év feletti gyerekeknek(ingyenes természetesen). December 15, 16. 15:00 órakor és 17.-én 16:00 órakor.', '2012-12-02 19:34:01', NULL),
+(21, 1, 1, 'Dec. 25.', 'December 25.-én kedden is lesz alkalom, dél után 4 órától.\r\nBékés, áldott és boldog karácsonyt mindenkinek!', '2012-12-24 12:19:57', NULL),
+(22, 1, 1, 'Dec. 31 - Szilveszter', 'Szilveszter 20:00 órától lesz az alkalom, lesznek programok és aki tudd az hozhat ételt (üdítõ és kenyér bizyosítva). \r\nMindenkit szertettel várunk! :)', '2012-12-30 12:43:01', NULL),
+(23, 1, 1, 'Szilveszter', 'A szilveszteri alkalomról készült képeket <a href=http://gyozelem.ro/index.php?page=1&id=9><b>itt</b></a> lehet megnézni. Boldog, áldott új évet mindenkinek!', '2013-01-02 18:42:27', NULL),
+(24, 1, 1, 'Ima és böjt', 'Agapé, Filadelfia, Bárka és a mi gyülink böjt és ima januárt hírdet, csütörtönként 19:00 órától.\r\n<br>\r\nMúlt csütörtök felvételek (.mp3):\r\nBudai Béla és Pokorny Istvánnal - útmutató (.MP3) <a href="https://docs.google.com/uc?id=0B2Xnb7P1IwsFUjR0WEp4VEdSejQ&export=download" target="_blank"> <b>Letöltés ITT</b> </a>\r\n<br>Kiss Zsolt - a böjt <a href="https://docs.google.com/file/d/0B2Xnb7P1IwsFU3hqeXFrWnk5Rnc/edit?pli=1" target="_blank"> <b>Letöltés ITT </b></a>', '2013-01-13 17:55:20', NULL),
+(25, 1, 1, 'Ne felejtsétek el...', 'Most csütörtökön 19:00-kor lesz az utolsó közöz alkalom (reméljük lesz folytatása persze, csak még nem tudjuk mikor). (Dunarea utca 13-as szám)\r\n\r\nMindenkinek nagyon ajánlom, hogy jöjjön el mert nagyon jó alkalmak voltak eddig is!!!', '2013-01-28 16:10:21', NULL),
+(26, 1, 1, 'Következô heti program', 'Március 28, 29, 30, 31.<br>\r\nCsütörtökön 19:00 - Imaóra<br> Pénteken 15:00 - Gyerek programok (sok szerettet várunk minden gyereket)<br> Szombaton 20:00 - Imaéjszaka<br> Vasárnap 16:00 - Alkalom', '2013-03-24 19:19:04', NULL),
+(27, 1, 1, 'Most vasárnap', 'Most vasárnap Cselovszki Attila - evangélista lesz a vendégünk, mindenkit szeretettel várunk!', '2013-04-10 15:51:30', NULL),
+(29, 1, 1, 'Május 5.', 'Keresztség lesz, mindenkit szeretettel várunk :)\r\n\r\nVendégünk lesz Boros Gyula, a Bárka gyülekezetbôl.', '2013-05-02 17:25:25', NULL),
+(30, 1, 1, 'Kép feltöltés', 'A keresztségrôl készült képek fel vannak töltve. <a href=\'http://gyozelem.ro/index.php?page=1&id=10\'> ITT </a>', '2013-05-06 12:02:38', NULL),
+(31, 1, 1, 'Képek (Yun)', 'Nehány kép felkerült a Yun (Jün) testvér látogatásáról a nagyváradi sportcsarnokban. <a href=\'http://gyozelem.ro/index.php?page=1&id=11\'> Album itt </a>, jó nézzelôdést! :)', '2013-05-16 18:54:52', NULL),
+(32, 1, 1, 'Igeversek', 'Napi igeversek a facebookon <a href=\'https://www.facebook.com/Igeversek\'> https://www.facebook.com/Igeversek </a>', '2013-05-28 15:50:40', NULL),
+(33, 1, 1, 'Június 4.', 'Június 4. - Kedden 18:00 órától Arnaldo Fernandez tart elôadást fiatal vagy leendô házasoknak nálunk (Dunarii 13.), mindenkit szerettel várunk!', '2013-05-30 15:54:00', NULL),
+(34, 1, 1, 'Szeretet nyelve', 'Feltöltve a Szeretet nyelve alaklom házastársaknak -ról néhánykép <a href =\'http://gyozelem.ro/index.php?page=1&id=12\' target=\'_blank\'><b><font color=\'#dd0000\'> Arnaldo Fernandez album</font></b></a>', '2013-06-04 19:15:53', NULL),
+(35, 1, 1, 'Szept. 1', '<b>Perjesi István</b> lesz a vendégünk szeptember elsején.<br>Mindenkit szeretettel várunk!', '2013-08-21 17:31:40', NULL),
+(36, 1, 1, 'Változás', 'Ezentúl reggel 8-tól van az imádkozás, a szombati imaéjszaka pedig a következô szombatra esik majd szóval október elsô szombatja.', '2013-09-22 19:53:21', NULL),
+(37, 1, 1, 'Vendég', 'Kiss József (Jocó) a debreceni Élet gyülekezet pásztora lesz vendégünk ma, 16:00 órái alkalmunkon.', '2013-11-10 09:15:23', NULL),
+(39, 1, 1, 'Konferencia', '<b>N&#337;i konferencia:</b><br> November 23.-án  10:00 óratól (Szombat) szeretttel várunk minden kedves feleséget az egész napos n&#337;i konferenciára  (felekezettöl függetlenül). Dunarii 13 szám, ', '2013-11-18 16:12:39', NULL),
+(40, 1, 1, 'Karácsony', 'Mindenkinek legyen békés, áldott karácsonya és ne feledkezzünk meg, hogy mit is ünneplünk!', '2013-12-21 17:48:51', NULL),
+(41, 1, 1, 'Szilveszter', 'Mindenkit szerettel várunk a <b>szilveszteri</b> alkalmunkra, hogy közösen, az Urat dícsérve lépjünk az új évbe! Kedden este 9 órától a gyüliben, mindenki hozzon egy kis ételt vagy sütit.', '2013-12-28 14:04:41', NULL),
+(42, 1, 1, 'Az új év itt van!', 'Szeretnénk kíváni áldott boldog új évet mindenkinek!', '2014-01-01 16:33:38', NULL),
+(43, 1, 1, 'Kiss Jocó', 'Vasárnap (Feb. 23)Kiss József lesz vendégünk 16:00 órai kezdettel.', '2014-02-17 14:22:58', NULL),
+(44, 1, 1, 'Felvétel', 'Egy újabb felvétel Kis József tanításaval az albumba (<a href=\'http://www.youtube.com/watch?v=DTAFM7_X5eI\'>video link</a>).', '2014-02-24 17:19:02', NULL),
+(45, 1, 1, 'Most vasárnap', 'Ma 16:00 órától Kiss József pásztor lesz nálunk, mindenkit szeretettel várunk!', '2014-04-06 10:44:54', NULL),
+(46, 1, 1, 'Vendég', 'Berkes Sándor tart elôadást április 27-én, 10:00 órától a gyülekezetben. <br>Téma: Teremtés, b&#369;neset, helyreállítás.<br>Mindenki szerettel várunk!', '2014-04-20 16:55:37', NULL),
+(47, 1, 1, 'Május 25', 'Május 25-ikén, 16:00 órától Kiss József lesz vendégünk! Mindenkit szerettel várunk!', '2014-05-25 10:43:03', NULL),
+(48, 1, 1, 'Változás!!', 'Ezentúl a vasárnapi alkalom 18:00 órától kezdôdik!', '2014-06-08 17:02:59', NULL),
+(49, 1, 1, '24.-e', 'Kiss József jön augusztus 24.-én 18:00 órától, mindenkit szeretettel várunk! ', '2014-08-21 17:37:07', NULL),
+(51, 1, 1, 'Visszaállás', 'Ezentúl újból vasárnap 16:00 órától van az alkalom. Keresztség lesz 31-én és 30-án imaéjszaka 9tôl.', '2014-08-24 19:19:46', NULL),
+(52, 1, 1, 'Bárka gyülekezet', 'Október 5. -én, 16:00 órától együtt a Bárka gyülekezettel lesz együtt áldott alkalmunk.', '2014-09-27 06:27:34', NULL),
+(53, 1, 1, 'Vasánap', 'Október 26. -án (vasárnap) Berkes Sándor lesz vendégünk, 10:00 órától. Mindenkit szeretettel várunk!', '2014-10-19 17:12:47', NULL),
+(54, 1, 1, 'Karácsony', 'Boldog, békés Karácsonyt mindenkinek!\r\n\r\n(nehány kép felkerült a 2014-es albumba)', '2014-12-25 18:37:21', NULL),
+(55, 1, 1, 'Vendég', 'Január 18. - Perjesi István lesz vendégünk, mindenkit szeretettel várunk!', '2015-01-10 05:42:33', NULL),
+(56, 1, 1, 'Harmadik böjt hét', 'Böjti hét harmadik hete következik akinek esetleg nincs meg a témáink itt megnézzheti <a href=\'http://gyozelem.ro/index.php?page=1&id=14&picid=191\'>Klikk ide</a>', '2015-01-18 11:59:03', NULL),
+(57, 1, 1, 'feb 8. vendégek', '<b>Ambrus Tibor, Kiss József</b> lesz a vendégeink, ma 16:00 órai kezdettel!<b> Mindenkit szerettel várunk!</b>', '2015-02-08 08:39:40', NULL),
+(58, 1, 1, 'Böjt', 'A következő héten böjt, mindenki aki tud válalni egy vagy több napot, azt kérem imádkozon az ország békességéért.', '2015-03-22 19:49:28', NULL),
+(60, 1, 1, '16. Csütörtök', 'Április 16.-án csütörtök 19:00 óratól egy hollandiai testvér lesz vendégünk, mindekit szeretettel várunk.', '2015-04-12 18:17:14', NULL),
+(61, 1, 1, 'Május 1.', 'Május 1: Péntek 10:00 órakor találkozunk...', '2015-04-26 20:02:34', NULL),
+(62, 3, 1, 'Képek', 'Május elsejés képek megnéhetök <a href=\'http://gyozelem.ro/album.php?id=16#25\'><b> itt </b></a>.', '2015-05-01 19:28:36', NULL),
+(63, 1, 1, 'Biblia', 'Ajánló: <a href=\'http://biblia.gyozelem.ro?book=40&chapter=1&vers=1#1\'> Online Biblia </a> (Mátétól - Jelenések könyvéig utalásokkal)', '2015-05-07 18:46:19', NULL),
+(64, 1, 1, 'Szalonta Máj. 31', 'Szalontán a Lacul Rosu utca, 14 szám alatt zenés istentiszteletet tartunk Május 31-én, vasárnap 17:00 órától, mindenkit szeretettel várunk!', '2015-05-26 12:36:22', NULL),
+(65, 1, 1, 'Július 5 - Gégény', 'Július 5-én 16 órai kezdettel vendégünk lesz Gégény Csaba és Éva, a Dünamisz Magyarország Evangélizáció szolgálói.Várunk szeretettel e különleges alkalomra, hívd el barátaidat is!', '2015-06-23 14:39:46', NULL),
+(66, 1, 1, 'Augusztus 23', 'Bálint Gyula lesz ma a vendégünk, mindenkit szeretettel várunk.', '2015-08-23 08:52:05', NULL),
+(68, 1, 1, 'Oldal frissítés', 'Az oldal egy új részleggel egészült ki.<br><a href=\'http://gyozelem.ro/articles.php\'><b>Cikkek</b></a>: bal oldalon található az album és felvételek között.', '2015-09-07 17:59:06', NULL),
+(70, 1, 1, 'Böjt a következő héten', 'Kérjük mindenkit, hogy böjtöljünk és imádkozunk az európai inváziós helyzetért, az országok vezetőiért, hogy legyen meg az Úr akarata.<br>\r\n<b>Szerdán, szombaton 19:00 közös alkalom.</b>\r\n<br>Mottó: <a href=\'http://biblia.gyozelem.ro/?book=29&chapter=2&vers=12&counter=6\'> Jóel 12-17</a>', '2015-09-20 18:19:36', NULL),
+(72, 1, 1, 'November 22', 'November 22. 16:00 órai kezdettel vendégünk lesz Perjesi István, a budapesti Agapé gyülekezetből.', '2015-11-16 14:34:30', NULL),
+(73, 1, 1, 'December 6', 'December 6. 16:00 órai kezdettel vendégünk lesz Boros Gyula, a Bárka gyülekezetből.', '2015-12-02 14:09:35', NULL),
+(74, 1, 1, 'Karácsony', 'Békés, boldog Karácsonyt kívánok mindenkinek!', '2015-12-24 19:01:11', NULL),
+(75, 1, 1, '2016', 'Aldott, boldog uj evet kivanunk 2016 -os evre!', '2015-12-31 18:14:18', NULL),
+(76, 1, 1, 'Böjt', 'Január 4-24 közötti böjti témák <a href=\'http://gyozelem.ro/album.php?id=19#1\'> itt </a> találhatóak meg. \r\nJak 2:20b - "hogy a hit cselekedetek nélkül megholt?"\r\n22b - " cselekedetekből lett teljessé a hit;"', '2016-01-08 18:11:53', NULL),
+(77, 1, 1, 'Böjt', 'Január 4-24 közötti böjti témák  <a href=\'http://gyozelem.ro/album.php?id=19#1\'>itt</a>  találhatóak meg.<br> <b>Jak 2:20b</b> - <i>"hogy a hit cselekedetek nélkül megholt?"</i> <br><b>22b</b> - <i>" cselekedetekből lett teljessé a hit;"</i>', '2016-01-08 18:14:09', NULL),
+(80, 1, 1, 'Február 21', 'Február 21. -én 10:00 órától <b>Perjesi István</b> tesvérünk lesz vendégünk a budapesti Agapé gyülekezetből.<br><br> Mindenkit szerettel várunk egésznapos alkalmunkra!', '2016-02-13 07:16:38', NULL),
+(81, 1, 1, 'Felvétel', 'A Perjesi István február 21.-i szolgálatáról készült felvétel a <a href=\'http://gyozelem.ro/video.php#2\'> <b>Felvételek</b> </a> oldalon tekinthető meg.', '2016-02-25 08:18:24', NULL),
+(82, 1, 1, 'Húsvét', 'Áldott Húsvétot kívánunk minden család számára!<br><br>ne felejtsük el: <br><b>Jézus ma is él és Úr!</b>', '2016-03-27 11:03:13', NULL),
+(83, 1, 1, 'Május 15', 'Május 15.-én vendégünk lesz Berkes Sándor. Az alkalom egész napos lesz és 10 órakor kezdődik, majd ebédszünet után délután folytatodik.<br>\r\nVárunk szeretettel mindenkit!', '2016-04-26 15:49:53', NULL),
+(84, 1, 1, 'Szeptember 25.', '<b>Ambrus Tibor</b> lesz vendégünk szeptember 25.-én és egy <b>Fülöp szigeti pásztor</b>ral. <br>mindenkit szeretettel várunk!', '2016-09-18 16:36:03', NULL),
+(85, 1, 1, 'Október 9', 'Október 9. Perjesi István lesz vendégünk 16:00 órától, mindenkit szeretettel várunk!', '2016-10-08 03:10:58', NULL),
+(86, 1, 1, 'Március 26', 'Vasárnap (26-án) Deli Vilmos lesz vendégünk 16:00 -tól.<br> \r\nMindenkit szeretettel várunk!', '2017-03-24 19:55:46', NULL),
+(87, 1, 1, 'Alkalom', 'Ma 18:00 órától van az alkalom.', '2017-06-04 08:10:22', NULL),
+(88, 1, 1, 'Augusztus 6.', 'Augusztus 6. <b>Berkes Sándor</b> lesz vendégünk 10:00 órától majd szünet és folytatás 14:00 fele egy másik temával, mindenkit szeretettel várunk!', '2017-07-23 20:46:16', NULL),
+(89, 1, 1, 'Október 29.', 'Pokorny István lesz vendégünk október 29 -én.<br>Mindenkit szeretettel várunk!', '2017-10-20 08:00:00', '2018-04-22 11:26:06'),
+(90, 1, 1, 'November 12.', 'Perjesi István lesz a vendégünk, mindenkit szeretettel várunk 16:00 -ra!', '2017-11-07 08:00:00', '2018-04-22 11:25:22');
 
 -- --------------------------------------------------------
 
@@ -576,6 +595,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone`, `address`, `city`, `country`, `rank`, `status`, `ip`, `browser`, `reg_hash`, `rec_hash`, `created`, `updated`) VALUES
+(48, 'Kis Pista', 'kispista@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, NULL, '2018-04-07 12:02:28', NULL),
+(1, 'Varga Zsolt', 'shadowvzs@hotmail.com', 'e10adc3949ba59abbe56e057f20f883e', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, NULL, '2018-04-03 16:24:17', NULL),
 (46, 'Varga Zsolt', 'shadowvzs15@gmail.com', 'e10adc3949ba59abbe56e057f20f883e', NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, NULL, '2018-03-28 20:09:33', NULL);
 
 --
@@ -586,6 +607,12 @@ INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone`, `address`, `cit
 -- Indexes for table `albums`
 --
 ALTER TABLE `albums`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `events`
+--
+ALTER TABLE `events`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -631,6 +658,11 @@ ALTER TABLE `users`
 ALTER TABLE `albums`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 --
+-- AUTO_INCREMENT for table `events`
+--
+ALTER TABLE `events`
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT;
+--
 -- AUTO_INCREMENT for table `guests`
 --
 ALTER TABLE `guests`
@@ -644,7 +676,7 @@ ALTER TABLE `images`
 -- AUTO_INCREMENT for table `news`
 --
 ALTER TABLE `news`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=91;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=109;
 --
 -- AUTO_INCREMENT for table `token`
 --
@@ -654,7 +686,7 @@ ALTER TABLE `token`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
