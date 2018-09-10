@@ -11,6 +11,11 @@ class News extends Model {
 		]
  	];
 
+    public static $ROLE_REQ = [
+        'add' => 2,
+        'delete' => 2
+    ];
+
 	public function index($data=null) {
 		$role = static::$auth['role']+1;
 		$sql = "SELECT n.id, u.name, n.title, n.message, n.created, n.updated FROM `news` as n LEFT JOIN `users` as u on n.user_id = u.id WHERE n.status <= $role ORDER BY n.created DESC";
@@ -22,10 +27,6 @@ class News extends Model {
 	}
 
 	public function add($data=null) {
-
-		if (static::$auth['role'] < 1) {
-			return static::refuseData('Nincs jogosultsága!');
-		}
 		$user = $_SESSION[static::$auth['hash']];
 		$newEvent = [
 			'title' => $data['title'],

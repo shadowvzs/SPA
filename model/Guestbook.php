@@ -4,79 +4,61 @@ spl_autoload_register(function ($class) {
 });
 class Guestbook extends Model {
 
-  public static $TABLE_NAME = 'guestbook';
+    public static $TABLE_NAME = 'guestbook';
 	public static $HIDDEN = ['password'];
-	public static $validation = [];
-  public static $INPUT_RULE = [
+    public static $INPUT_RULE = [
 		'id' => ['type'=>'INTEGER'],
-    //'name' => ['type'=>'INTEGER'],
-    //'message' => ['type'=>'INTEGER'],
+        'name' => ['type'=>'NAME_HUN'],
+        'email' => ['type'=>'EMAIL'],
+        'message' => ['type'=>'STRING'],
  	];
 
+    public static $ROLE_REQ = [
+        'delete' => 3
+    ];
+
 	protected function index($data){
-		$Auth = static::$auth;
-    $limit = 20;
-    $index = 0;
-		$guestbook = static::execQuery("SELECT id, user_id as userId, name, message, created, updated FROM `guestbook` WHERE status < ".($Auth['role']+1)." ORDER BY created DESC");
-  	$renderFunc = 'build';
+		$auth = static::$auth;
+        $limit = 20;
+        $index = 0;
+		$guestbook = static::execQuery("SELECT id, user_id as userId, name, email, message, created, updated FROM `guestbook` WHERE status < ".($auth['role']+1)." ORDER BY created DESC");
+  	     $renderFunc = 'build';
 		$container = null;
 		return $this->sendResponse([$guestbook, $container], $renderFunc);
 	}
 
-	protected function album($data=null){
+  protected function delete($data=null){
+    return $this->sendResponse([
+        "deleted"=>static::deleteById(intval($data['id']))
+      ], null);
+  }
 
-		$id = $data['id'];
-		$index = isset($data['index']) ? $data['index'] : 0;
-		$Auth = static::$auth;
-		$cond = $Auth['role'] > 0 ? ['1', '1'] : ['status = 1', 'i.status = 1'];
 
-		$albums = static::execQuery(
-			"SELECT id, user_id as userId, title
-			FROM albums
-			WHERE ".$cond[0]
-		);
+  protected function add($data=null){
+    if ($data['name'] === "session") {
+            $user_data = $_SESSION[$_SESSION['token']];
+            $data['name'] = $user_data['name'];
+            $data['email'] = $user_data['email'];
+        }
+        if ($data['id'] === "0") {
+            unset($data['id']);
+            $data['user_id'] = $user_data['id'];
+        } else {
+            if (!static::modifiable($data['id'],0,2)) {
+                return static::refuseData('hozzászólás nem található vagy nincs jogod hozzá!');
+            }
+        }
 
-		$title = false;
-		foreach ($albums as $album) {
-			if ($album['id'] == $id) {
-				$title = $album['title'];
-			}
-		}
-
-		if (!$title) {
-			return static::refuseData('Album not exist!');
-		}
-		// if no join we can get index in query like this
-		//, @curRow := @curRow + 1 AS index
-		//JOIN (SELECT @curRow := 0) r
-		$images = static::execQuery("SELECT u.name as name, i.id as id, i.status as status, i.album_id as albumId, i.user_id as userId, i.path as path, i.description as description, i.created as created, i.updated as updated, i.album_id as parentId
-			FROM images as i
-			LEFT JOIN users as u
-			ON u.id = i.user_id
-			WHERE ".$cond[1]." AND i.album_id = ".$id);
-		$len = count($images);
-		for ($i=0;$i < $len; $i++){
-			$images[$i]['index'] = $i+1;
-		}
-		$data = [ ['title'=>$title], $albums, $images];
-		// we send every data with a single response
-		// to multiple render function, se we can update
-		// multiple element with 1 response
-		$multicall = [];
-		$multicall[] = [$data, 'build'];
-
-		// we send images from selected album to popUp.dataList,
-		// so don't need request for image next/previous in popUp window
-		// Note: only YouTube videos and images use the popUp window
-		$multicall[] = [$images, $index,'setPopUpData'];
-		$multicall[] = ['album_'.$id, 'path','preloadImage'];
-
-		if ($index > 0) {
-			$multicall[] = ['image/'.$index, true,'popUpRender'];
-		}
-
-		return $this->sendResponse($multicall, 'multicall');
-	}
+        if (!$data['user_id']) { $data['user_id'] = 0; }
+        if($this->save($data)) {
+            if (!$data['id']) { $data['id'] = static::inserted_id(); }
+            $data['userId'] = $data['user_id'];
+            $data['created'] = date("Y-m-d H:i:s");
+            return $this->sendResponse([$data]);
+        } else {
+            return static::refuseData('Nem sikerült lementeni!');
+        }
+    }
 
 }
 

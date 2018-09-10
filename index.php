@@ -51,11 +51,11 @@
 			<div class="content page">
 				<div class="loader middle"></div>
 			</div>
+
 			<footer>
 				&copy; 2017 by Varga Zsolt
 			</footer>
 		</div>
-
 
 	<div class="modal-layer sm_blck_trnspnt_bg page-modal hidden"></div>
 	<div class="popUp hidden fade-in" data-modal="true">
@@ -65,22 +65,7 @@
 
 	<div class="cacheTrash"> </div>
 
-	<!--
-	maybe i use this later with windows.css
-	but at moment stil missing the administation part
-
-	<div class="modal-layer blck_trnspnt_bg">
-		<div id="AddNews" class="window"><div class="header">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>Új hír szerkesztése</b><div class="close" onclick="core.closeModalWindow('#AddNews');">&times;</div></div>
-			<div class="content">
-				<br>Ki láthatja: <select name="cat"><option value='0'>Nyilvános</option><option value='1'>Bejelentkezet</option><option value='2'>Tag</option><option value='3'>Moderátor</option></select><br>
-				<br>Cím: <input type="text" name="Newstit" maxlength="50"><br>
-				<br>Szöveg: <br><textarea name="txt" id="txt" onKeyUp="alert(this.value);counttext();"></textarea><br><br>
-				<span class="button"> Ment </span>&nbsp;&nbsp;<span class="button" onclick="core.closeModalWindow('#AddNews');"> Mégse </span>
-			</div>
-		</div>
-	</div>
-	-->
-	<link rel="stylesheet" href="/css/calendar.css" type="text/css" />
+	<link rel="stylesheet" href="/css/delayed.css" type="text/css" />
 	<script src="/js/App.js?s=<?php echo time(); ?>" type="text/javascript"></script>
 	</body>
 </html>

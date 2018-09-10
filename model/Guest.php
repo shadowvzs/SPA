@@ -4,12 +4,17 @@ spl_autoload_register(function ($class) {
 });
 class Guest extends Model {
 
-  public static $TABLE_NAME='guests';
+    public static $TABLE_NAME='guests';
 	public static $AUTO_FILL = [
 		'add' => [
 			'status' => 1,
 		]
  	];
+
+    public static $ROLE_REQ = [
+        'add' => 2,
+        'delete' => 3
+    ];
 
 	public function index($data=null) {
 		$role = static::$auth['role']+1;
@@ -22,10 +27,6 @@ class Guest extends Model {
 	}
 
 	public function add($data=null) {
-
-		if (static::$auth['role'] < 1) {
-			return static::refuseData('Nincs jogosultsága!');
-		}
 		$user = $_SESSION[static::$auth['hash']];
 		$newEvent = [
 			'title' => $data['title'],

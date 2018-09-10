@@ -4,19 +4,25 @@ spl_autoload_register(function ($class) {
 });
 class Gallery extends Model {
 
-  public static $TABLE_NAME = 'albums';
-	public static $validation = [];
-  public static $INPUT_RULE = [
+	public static $TABLE_NAME = 'albums';
+	public static $INPUT_RULE = [
 		'id' => ['type'=>'INTEGER'],
 		'index' => ['type'=>'INTEGER'],
+		'title' => ['type'=>'NAME_HUN', 'length' => [3, 100]],
+		//'description' => ['length' => [0, 5000]],
+		'description' => ['type'=>'STRING', 'length' => [0, 5000]],
  	];
 
+    public static $ROLE_REQ = [
+        'addAlbum' => 2,
+        'deleteAlbum' => 3
+    ];
+
 	protected function index(){
-		$Auth = static::$auth;
-    $role = static::$auth['role']+1;
-		$cond = ['i.status < '.$role, 'a.status < '.$role];
-		//role
-		$sql = "SELECT a.id as id, a.user_id as userId, a.title as title, a.description as description, a.created as created, i.mid as imageId, i2.path as coverImage
+		$role = static::$auth['role'];
+		$cond = $role > 2 ? ['1', '1'] : ['i.status = 1', 'a.status = 1'];
+
+		$sql = "SELECT a.id as id, a.user_id as user_id, a.status as status, a.title as title, a.description as description, a.created as created, i.mid as imageId, i2.path as coverImage
 			FROM albums as a
 			LEFT JOIN
 				(SELECT i.album_id as album_id, MAX(i.id) as mid
@@ -25,7 +31,7 @@ class Gallery extends Model {
 					GROUP BY i.album_id
 				 ) as i
 				 ON i.album_id = a.id
-			INNER JOIN images i2
+			LEFT JOIN images i2
 				ON i2.id = i.mid
 			WHERE ".$cond[1];
 		$albums = static::execQuery($sql);
@@ -35,12 +41,10 @@ class Gallery extends Model {
 	}
 
 	protected function album($data=null){
-
 		$id = $data['id'];
 		$index = isset($data['index']) ? $data['index'] : 0;
-		$Auth = static::$auth;
-    $role = static::$auth['role']+1;
-		$cond = ['status < '.$role, 'i.status < '.$role];
+		$role = static::$auth['role']+1;
+		$cond = $role > 2 ? ['1', '1'] : ['status = 1', 'i.status = 1'];
 
 		$albums = static::execQuery(
 			"SELECT id, user_id as userId, title
@@ -88,6 +92,53 @@ class Gallery extends Model {
 		}
 
 		return $this->sendResponse($multicall, 'multicall');
+	}
+
+	protected function addAlbum($data=null){
+		extract($data);
+		$user = static::$auth;
+
+		$newAlbum = [
+			'title' => $title,
+			'description' => $description,
+			'user_id' => $user['userId'],
+			'status' => 1
+		];
+
+		if ($id['id'] > 0) { $newAlbum['id'] = $id; }
+
+		$saved = $this->save($newAlbum);
+		if($saved) {
+			$saved = static::getById($newAlbum['id'] ?? static::inserted_id());
+			$renderFunc = $id['id'] > 0 ? 'update' : 'add';
+			return $this->sendResponse($saved, $renderFunc);
+		}
+
+		return static::refuseData('Nem sikerült lementeni!');
+	}
+
+	protected function deleteAlbum($ids=null){
+		$user = static::$auth;
+
+		if (empty($ids)) {
+			return static::refuseData('Select atleast 1 album!');
+		}
+
+		$safeIds = implode(',', array_filter($ids, function($e){ return intval($e) > 0; }));
+		$folder = "../img/gallery/";
+		$folder_thumb = "../img/gallery/mini/";
+		$result = static::execQuery("SELECT `path`, `id` FROM `images` WHERE album_id IN ({$safeIds})");
+		foreach($result as $image) {
+			if (file_exists($folder.$image['path'])) {
+				unlink($folder.$image['path']);
+			}
+			if (file_exists($folder_thumb.$image['path'])) {
+				unlink($folder_thumb.$image['path']);
+			}
+		}
+		static::execQuery("DELETE FROM `images` WHERE album_id IN ({$safeIds})");
+		static::execQuery("DELETE FROM `albums` WHERE id IN ({$safeIds})");
+		return $this->sendResponse(['ids' => $safeIds], 'remove', 'Albums was delete');
 	}
 
 }

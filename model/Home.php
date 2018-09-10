@@ -19,13 +19,13 @@ class Home extends Model {
 		"home_last_note" =>
 			"<h2>".$lastNews['title']."</h2>
 			<p>".$lastNews['message']."</p>
-			<div class='calendarIcon'><img src='./img/icons/menu/event.png'></div>",
+			<a href='*' data-action='toggle/cal_news'><div class='calendarIcon'><div class='calendar-icon icon-48'></div></a>",
       //.guestCalendar
       //more button col-gray
 		"home_social" =>
 			"Követhet minket a követkző helyeken: <br>
-			<br><br><h3>Facebook:</h3> <a href='https://www.facebook.com/gyozelemgyulekezet' target='_blank'><img src='./img/icons/social/facebook.png'></a>
-			<br><br><h3>YouTube:</h3> <a href='https://www.youtube.com/channel/UCju4wi5kFZ80lV8QHrm8lXg' target='_blank'><img src='./img/icons/social/youtube.png'></a>",
+			<br><br><h3>Facebook:</h3> <a href='https://www.facebook.com/gyozelemgyulekezet' target='_blank'><div class='facebook-icon icon-48'></div></a>
+			<br><br><h3>YouTube:</h3> <a href='https://www.youtube.com/channel/UCju4wi5kFZ80lV8QHrm8lXg' target='_blank'><div class='youtube-icon icon-48'></div></a>",
 		"home_about" =>
 			"<h2>Rólunk:</h2> Gyülekezetünk 15 éve jött létre és 7 helységben vannak gyülekezeteink: Nagyvárad, Szalonta, Székelyhíd, Mónospetri, Bogyoszló, Margitta, Érmihályfalva.<br><br>
 			<h2>Hitünk:</h2> Hiszünk az egy igaz Istenben, Jézus Krisztusban mint Isten fiában aki a mi megváltónk, a Szent Szellemben mint vígasztaló és tanító, a Bibliában mint Isten igéjeben ami Istentől ihletett útmutatónk.<br><br>
