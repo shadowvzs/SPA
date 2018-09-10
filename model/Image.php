@@ -11,7 +11,6 @@ class Image extends Model {
         'normal' => '1200',
         'thumb' => '240'
     ];
-    public static $COLOR_DEPTH = 256;
  	public static $INPUT_RULE = [
 		'id' => ['type'=>'INTEGER'],
 		'index' => ['type'=>'INTEGER'],

@@ -249,7 +249,7 @@
 
 #audioPlayer {
 	position: absolute;
-	top:20%;
+	top: 20%;
 	background-color: #2b2e31;
 	max-width: 400px;
 	width: 100%;
@@ -259,7 +259,7 @@
 	color: #fff;
 	font-family: arial;
 	box-shadow: 0 0 10px rgba(0,0,0,0.9);
-	z-index: 1;
+	z-index: 211;
 }
 
 #audioPlayer .header {
@@ -861,6 +861,7 @@ div.separator {
 	font-size: 12px;
 	font-weight: 400;
 	padding: 5px;
+	resize: none;
 }
 
 /* difference with albumManager */

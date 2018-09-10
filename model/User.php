@@ -103,6 +103,7 @@ class User extends Model {
 		];
         $user_data['ip'] = $_SERVER['SERVER_ADDR'];
 		$user_data['password'] = $this->createPassword($user_data['password']);
+        unset($user_data['password2']);
 		if($this->save($user_data)) {
 			$this->login($login_data);
 		} else {

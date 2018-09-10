@@ -9,7 +9,6 @@ class Gallery extends Model {
 		'id' => ['type'=>'INTEGER'],
 		'index' => ['type'=>'INTEGER'],
 		'title' => ['type'=>'NAME_HUN', 'length' => [3, 100]],
-		//'description' => ['length' => [0, 5000]],
 		'description' => ['type'=>'STRING', 'length' => [0, 5000]],
  	];
 
@@ -18,11 +17,11 @@ class Gallery extends Model {
         'deleteAlbum' => 3
     ];
 
-	protected function index(){
+	protected function index() {
 		$role = static::$auth['role'];
 		$cond = $role > 2 ? ['1', '1'] : ['i.status = 1', 'a.status = 1'];
 
-		$sql = "SELECT a.id as id, a.user_id as user_id, a.status as status, a.title as title, a.description as description, a.created as created, i.mid as imageId, i2.path as coverImage
+		$sql = "SELECT a.id as id, a.user_id as user_id, a.slug as slug, a.status as status, a.title as title, a.description as description, a.created as created, i.mid as imageId, i2.path as coverImage
 			FROM albums as a
 			LEFT JOIN
 				(SELECT i.album_id as album_id, MAX(i.id) as mid
@@ -41,20 +40,21 @@ class Gallery extends Model {
 	}
 
 	protected function album($data=null){
-		$id = $data['id'];
+		$slug = $data['slug'];
+        $parentAlbum = static::getBySlug($slug);
 		$index = isset($data['index']) ? $data['index'] : 0;
 		$role = static::$auth['role']+1;
 		$cond = $role > 2 ? ['1', '1'] : ['status = 1', 'i.status = 1'];
 
 		$albums = static::execQuery(
-			"SELECT id, user_id as userId, title
+			"SELECT id, user_id as userId, slug, title
 			FROM albums
 			WHERE ".$cond[0]
 		);
 
 		$title = false;
 		foreach ($albums as $album) {
-			if ($album['id'] == $id) {
+			if ($album['id'] == $parentAlbum['id']) {
 				$title = $album['title'];
 			}
 		}
@@ -69,12 +69,12 @@ class Gallery extends Model {
 			FROM images as i
 			LEFT JOIN users as u
 			ON u.id = i.user_id
-			WHERE ".$cond[1]." AND i.album_id = ".$id);
+			WHERE ".$cond[1]." AND i.album_id = ".$parentAlbum['id']);
 		$len = count($images);
 		for ($i=0;$i < $len; $i++){
 			$images[$i]['index'] = $i+1;
 		}
-		$data = [ ['title'=>$title], $albums, $images];
+		$data = [ ['title' => $title], $albums, $images];
 		// we send every data with a single response
 		// to multiple render function, se we can update
 		// multiple element with 1 response
@@ -85,7 +85,7 @@ class Gallery extends Model {
 		// so don't need request for image next/previous in popUp window
 		// Note: only YouTube videos and images use the popUp window
 		$multicall[] = [$images, $index,'setPopUpData'];
-		$multicall[] = ['album_'.$id, 'path','preloadImage'];
+		$multicall[] = ['album_'.$parentAlbum['id'], 'path','preloadImage'];
 
 		if ($index > 0) {
 			$multicall[] = ['image/'.$index, true,'popUpRender'];
@@ -99,7 +99,8 @@ class Gallery extends Model {
 		$user = static::$auth;
 
 		$newAlbum = [
-			'title' => $title,
+            'title' => $title,
+            'slug' => static::slugify($title),
 			'description' => $description,
 			'user_id' => $user['userId'],
 			'status' => 1

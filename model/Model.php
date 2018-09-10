@@ -2,6 +2,8 @@
 session_start();
 header('Content-Type: application/json');
 unset($_SESSION['domain']);
+define('DEBUG',true);
+
 class Model {
 	protected static $files;
 	protected static $request = [];
@@ -10,8 +12,8 @@ class Model {
 
 	protected static $DATABASE = [
 		"HOST" => 'localhost',
-		"USER" => 'root',
-		"PASSWORD" => 'root',
+		"USER" => 'root',		
+		"PASSWORD" => 'root',	
 		"DATABASE" => "my_db"
 	];
 
@@ -29,7 +31,6 @@ class Model {
 	];
 
 	public function __construct() {
-
 		if (!empty($_FILES)) {
 			static::$files = $_FILES;
 		}
@@ -227,8 +228,12 @@ class Model {
 		]));
 	}
 
-    public static function getById ($id){
+	public static function getById ($id){
 			return static::readRecords(sprintf('`id` = %u',$id), true);
+    }
+
+	public static function getBySlug ($slug) {
+ 		   return static::readRecords(sprintf('`slug` = "%s"',$slug), true);
     }
 
     public static function getAll(){
@@ -328,7 +333,7 @@ class Model {
 		return static::execQuery($query);
     }
 
-	protected static function readRecords ($conditons="1", $returnData=false, $array=false, $pageIndex=0, $perPage=PHP_INT_MAX, $orderBy=false, $orderDesc=false){
+	protected static function readRecords ($conditons="1", $returnData=false, $array=false, $pageIndex=0, $perPage=PHP_INT_MAX, $orderBy=false, $orderDesc=false) {
 		if ($perPage < 1) { $perPage = 30; }
 		$orderBy = $orderBy ? sprintf("ORDER BY `%s` %s",$orderBy,$orderDesc ? "DESC" : "ASC") : "";
 		$startPage = $pageIndex>-1 ? ($pageIndex*$perPage): 0;
@@ -349,15 +354,23 @@ class Model {
 	}
 
 	public function getInsertedId(){
-		if (isset($this->id)) {
-			return $this->id;
-		}else{
-			return mysqli_insert_id(static::getConn());
-		}
-
+		return isset($this->id) ? isset($this->id) : mysqli_insert_id(static::getConn());
 	}
 
-	protected static function execQuery ($query){
+	public static function slugify ($string) {
+	    $string = utf8_encode($string);
+	    $string = iconv('UTF-8', 'ASCII//TRANSLIT', $string);
+	    $string = preg_replace('/[^a-z0-9- ]/i', '', $string);
+	    $string = str_replace(array(' - ',' -','- ',' '), '-', $string);
+	    $string = trim($string, '-');
+	    $string = strtolower($string);
+	    if (empty($string)) {
+	        return 'n-a';
+	    }
+	    return $string;
+	}
+
+	protected static function execQuery ($query) {
 		$queryResult = mysqli_query(static::getConn(), $query);
 
 		if (substr($query,0,6) !== "SELECT") {
@@ -366,7 +379,8 @@ class Model {
 				: false;
 		}
 		if (!$queryResult) {
-			static::refuseData("database error");
+			if (DEBUG)
+			static::refuseData(DEBUG ? "Failed query: $query" : "database error");
 		}
 
 		if (is_object($queryResult)){

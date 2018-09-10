@@ -43,7 +43,7 @@
 		CLIENT_TIME_ZONE = new Date().getTimezoneOffset()*60,
 		ALLOWED_STATUS_DIFFERENCE = 30,	// if difference is higher then user is offline
 		debug = data => (	// ajax error debug
-			console.log(data)
+			console.log(data.error || data)
 		);
 
 	// default auth
@@ -80,12 +80,13 @@
 		function request (url, method, data={}, success, error) {
 			if (typeof error != "function" || typeof success != "function") { return alert('Missing classback(s)....'); }
 			if (!url) { return error('no settings for request'); }
-			let type = "POST";
+			let type = "POST", timeout = 3000;
 			const isFile = method === 'FILE',
 			 	contentType = isFile ? 'multipart/form-data' : 'application/x-www-form-urlencoded',
 				httpRequest = new XMLHttpRequest();
 
 			if (isFile) {
+				timeout = 15000;
 				data.append('hash', Auth.hash || '');
 				data.append('domain', Auth.domain || '');
 			} else {
@@ -128,6 +129,14 @@
 
 			httpRequest.responseType = 'json';
 			httpRequest.open(type, url, true);
+
+			httpRequest.timeout = timeout; // time in milliseconds
+			httpRequest.ontimeout = function (e) {
+				let loader = document.body.querySelector('.loader.middle');
+				if (loader) { loader.remove(); }
+			   	notify.add("Request timeout (limit: "+(timeout/1000)+"s)", "error");
+			};
+
 			if (type !== "POST" || !data) {
 				httpRequest.send();
 			} else if (isFile) {
@@ -182,28 +191,28 @@
 		},
 
 		routes = [
-			// example for prefix,like /admin/home
+			//url: prefix/controller/view | prefix | auth group | validation for params
 			//['/admin/home/:id/:name', 'admin', 1, ['NUMBER', 'SLUG']],
+			['/article', false, null, false],
+			['/article/add', false, 3, false],
+			['/article/add/:slug', false, 3, ['SLUG']],
+			['/article/:category_slug', false, null, ['SLUG']],
+			['/article/view/:slug', false, null, ['SLUG']],
 			['/home', false, null, false],
 			['/event', false, null, false],
 			['/guestbook', false, null, false],
-			['/video/playlist/:id/:index', false, null, ['SLUG','NUMBER']],
+			['/video/playlist/:id/:index', false, null, ['SLUG','SLUG']],
 			['/video/playlist/:id', false, null, ['SLUG']],
 			['/video', false, null, false],
-			['/gallery/album/:id/:index', false, null, ['SLUG','NUMBER']],
-			['/gallery/album/:id', false, null, ['SLUG']],
+			['/gallery/album/:slug/:index', false, null, ['SLUG','NUMBER']],
+			['/gallery/album/:slug', false, null, ['SLUG']],
 			['/gallery', false, null, false],
-			['/audio', false, null, false],
 			['/user/login', false, null, false],
 			['/user/logout', false, null, false],
 			['/user/registration', false, null, false],
 			['/user', false, 2, false],
-			['/user/view/:id', false, null, ['NUMBER']],
-			['/user/edit/:id', false, null, ['NUMBER']],
 			['/error/:id', false, null, ['NUMBER']],
 		];
-
-		//url: prefix/controller/view | prefix | auth group | validation for params
 
 		function validateRoute(){
 			let { base_path, base_arr, url_array, query_string, query_array } = path(),
@@ -233,17 +242,13 @@
 					firstChar = route_url[i].charAt(0);
 					if (firstChar !== ":" && route_url[i] === url_array[i] && i < 3) {
 						//verification or static url piece
-						//console.log('STATIC PARAM: '+route_url[i]);
 						data[dataKeys[i + 1 - shiftIndex]] = url_array[i];
 					} else if (firstChar === ":" && route_url[i].length > 0 && i > 0) {
-						//console.log('DYNAMIC PARAM: '+route_url[i]);
 						// verification for dynamic params like :id
 						if (Array.isArray(route[3])) {
 							if (VALIDATOR[route[3][paramCount]].test(url_array[i])) {
-								//console.log('    VALIDATION: validation on '+url_array[i]+' passed');
 								data.param[route_url[i].substr(1)] = url_array[i];
 							} else {
-								//console.log('    VALIDATION: missing or wrong validation for '+url_array[i]+'');
 								// if incorrect data with dynamic param like :id
 								return redirect(NOT_FOUND_URL, 'Not Found');
 							}
@@ -251,14 +256,11 @@
 						paramCount++;
 
 					} else {
-						//console.log('DROPPED PARAM: '+route_url[i]);
 						// skip every checking if first param not same
-						//i = len;
 						break;
 					}
 					if (i === len - 1 ) {
 						if (!isNaN(parseInt(route[2])) && Auth.role < route[2] ) {
-							//console.log('User have no access for '+base_path+', we redirect to '+NO_ACCESS_URL);
 							return redirect(NO_ACCESS_URL, 'Forbidden');
 						}
 						// verification for route[2] role rank
@@ -270,10 +272,7 @@
 							for ( query_param of query_array ) {
 								Object.assign(data.param, query_param);
 							}
-							//Object.assign(data.param, query_array);
 						}
-						//console.log(data.param);
-
 						return data;
 					}
 				}
@@ -282,10 +281,8 @@
 		}
 
 		function redirect(newUrl=null, title=null, obj=null) {
-			//console.log('old path: '+path().base_path);
-			history.pushState( null , title, BASE_ROOT+path().base_path );
 			if (newUrl) {
-				//console.log('new path: '+newUrl);
+				history.pushState( null , title, BASE_ROOT+path().base_path );
 				history.replaceState( null , title, BASE_ROOT+newUrl );
 			}
 			const data = validateRoute();
@@ -321,23 +318,19 @@
 					e.preventDefault();
 					redirect(href);
 					if (burgerCheckbox.checked) { burgerCheckbox.checked = false; }
-				// special link - form submit / popUp etc
+				// special link - components - form submit etc
 				} else if (href === '*') {
+					console.log('special link was detected');
 					let action = (t.dataset.action || []).split('/');
 					if (!action) { return console.log('Warning: data-action is empty'); }
 					let actionType = action.splice(0, 1)[0],
 					 		actionData = action.join('/');
-					console.log(t);
 					if (!t.dataset.allow) {
 						e.preventDefault();
 					}
 
 					if (actionType === 'submit') {
-						console.log('form event link was detected');
 						model.submitForm(actionData+"_Form");
-					} else if (actionType === 'popup') {
-						console.log('popup event link was detected');
-						popUp.render(actionData);
 					} else if (actionType === 'update') {
 						// form update
 					} else if (actionType === 'component') {
@@ -349,14 +342,13 @@
 						}
 					} else if (actionType === 'toggle') {
 						// show/hide if click to it, you can give multiple element if you separate with ","
-						let targets = action.indexOf(",") === -1 ? [action] : action.split(','), e, t;
+						let targets = action[0].indexOf(",") === -1 ? [action] : action[0].split(','), e, t;
 						for (t of targets) {
 							e = document.getElementById(t);
-							if (e) {
-								const bool = e.style.display === "none";
-								e.style.display = bool ? "block" : "none";
-								if (bool) {	e.scrollIntoView(false); }
-							}
+							if (!e) { continue; }
+							const bool = e.style.display === "none";
+							e.style.display = bool ? "block" : "none";
+							if (bool) {	e.scrollIntoView(false); }
 						}
 					} else if (actionType === 'selectAll') {
 						// i dont need array for this at moment, else i would use this again
@@ -377,13 +369,9 @@
 
 			// event handler if user click to BACK button
 			window.addEventListener('popstate', event => {
-				// The popstate event is fired each time when the current history entry changes.
 				let href = location.href;
-				history.back();
-				if (href != location.href) {
-					console.log('back');
-					redirect();
-				}
+				redirect();
+				// history.back();
 				event.preventDefault();
 				// Uncomment below line to redirect to the previous page instead.
 				// window.location = document.referrer // Note: IE11 is not supporting this.
@@ -396,11 +384,38 @@
 			eventRegistation();
 		} else {
 			document.onreadystatechange = () => {
-			  if (document.readyState === 'complete') {
-				 eventRegistation();
-			  }
+			  	if (document.readyState === 'complete') {
+				 	eventRegistation();
+			  	}
 			};
 		}
+
+		function virtualRedirect(newUrl) {
+			history.pushState( null, null, location.href );
+			history.replaceState( null, null, newUrl );
+			console.log(newUrl);
+		}
+
+		function setUrl(urlAddon=false) {
+			let newUrl = BASE_ROOT+'/';
+			const r = pages.current.routeData,
+				paramKeys = Object.keys(r.param || {});
+			if (r.prefix) {
+				newUrl += r.prefix;
+			}
+			newUrl += r.controller+'/'+r.action;
+			if (paramKeys.length) {
+				for (let key of paramKeys) {
+					newUrl += '/'+r.param[key];
+				}
+			}
+			if (urlAddon) {
+				newUrl += '/'+urlAddon;
+			}
+
+			virtualRedirect(newUrl);
+		}
+
 
 		return {
 			url() {
@@ -415,10 +430,11 @@
 			redirect(newUrl=null, title=null, obj=null) {
 				return redirect(newUrl, title, obj);
 			},
-			virtualRedirect(newUrl){
-				history.pushState( null, null, location.href );
-				history.replaceState( null, null, newUrl );
-				console.log(newUrl);
+			setFullUrl(newUrl){
+				virtualRedirect(newUrl);
+			},
+			setUrl(urlAddon=false) {
+				setUrl(urlAddon);
 			},
 			// not dry but maybe easier to read, anyway not too much plus
 			init() {
@@ -432,7 +448,7 @@
 	// ---------------------- model -------------------------
 	// ------------------------------------------------------
 
-	function Model(middleware=false){
+	function Model(injectedRouter=false){
 		// let store the ongoing requests in this object until we have callback
 		// example: user click to home, then we send request to Home.php for data
 		// and we disable request sending for same url until we get a success or error
@@ -452,10 +468,8 @@
 				getData(d=null) {
 					const local = this.localData;
 					if ((local.playList.length > 0) && (!d.id)) {
-						console.log('play list readed from variable');
 						return view.build([local.playList]);
 					} else if (d.id && local.videoList && local.videoList[d.id] && local.videoList[d.id].length) {
-						console.log('video list readed from variable');
 						return view.build([local.videoList[d.id]]);
 					}
 
@@ -471,7 +485,6 @@
 								counter: e.contentDetails.itemCount,
 							});
 						});
-						console.log('render from playlist handler');
 						return view.build([playlist]);
 					}
 
@@ -492,12 +505,7 @@
 								img: e.snippet.thumbnails.medium.url,
 							});
 						});
-
 						view.build([videoList]);
-						popUp.setData(videoList, index || 0);
-						if (index > 0) {
-							popUp.render('youtube/'+index, true);
-						}
 					}
 
 					if (!d.id) {
@@ -528,11 +536,10 @@
 			// store input value with key but we remove the prefix
 			// form is login, then input id and name mut have "login_" prefix
 			// ex. in login form <input name="login_password"> but we store "password"
-			console.log(form.id);
 			if (!form) { return console.log('form not exist') ;}
 			let inputs = form.querySelectorAll('input, select, textarea'), value, rule, val_len, pattern,
 			name, prefix = form.id.split('_')[0], len = prefix.length+1, param = {};
-			//console.log(inputs);
+
 			for (let input of inputs) {
 				name = input.getAttribute('name');
 				if  (!name && name.length > len) { continue; }
@@ -612,6 +619,9 @@
 
 		function jumpToRender(str, data){
 			if (!str) { return console.log('empty render function');}
+			if (str === "redirect") {
+				injectedRouter.redirect(data.url);
+			}
 			if (str === "build" || str === "multicall") { return view[str](data); }
 			let s = str.split('.');
 			if (s.length !== 2) { return console.log('invalid render function string'); }
@@ -633,15 +643,14 @@
 			console.log(requestKey);
 
 			function successHandler(data){
-				console.log('answer success');
 				if (requestKey) { delete activeRequest[requestKey]; }
  				// to render function we give modelData array
 				// if render function need more param then modelData.length = arg.length
 
-        	if (handlerFunc) {
-				handlerFunc(data);
-			} else if (data.renderFunc) {
-				jumpToRender(data.renderFunc, data.modelData)
+        		if (handlerFunc) {
+					handlerFunc(data);
+				} else if (data.renderFunc) {
+					jumpToRender(data.renderFunc, data.modelData)
 				}
 			}
 
@@ -650,7 +659,7 @@
 				if (requestKey) { delete activeRequest[requestKey]; }
 				// if renderfunction true then content will be wiped
 				if (data.data && data.data.renderFunc) {
-					let loader = document.querySelector('.loader.middle');
+					let loader = document.body.querySelector('.loader.middle');
 					if (loader) {
 						loader.outerHTML = "";
 						router.redirect('/error/404');
@@ -680,9 +689,6 @@
 					key = key.substr(4);
 					if (!Api[key] || !Api[key]['getData']) { return console.log('Api undefined ('+key+')'); }
 					Api[key].getData(param);
-					console.log(key);
-				} else {
-					console.log('not api');
 				}
 			}
 
@@ -719,8 +725,15 @@
 					},
 					constructor: SettingsManager
 				},
+				modal: {
+					name: 'modal',
+					constructor: ModalComponent
+				},
 				audioPlayer: {
 					name: 'audioPlayer',
+					datasource: {
+						get: MODEL_PATH+'Audio.php?action=get',
+					},
 					constructor: AudioPlayer
 				},
 				messageCenter: {
@@ -741,9 +754,30 @@
 						write: MODEL_PATH+'Message.php?action=get_users',
 						view: MODEL_PATH+'Message.php?action=get_single_mail',
 					},
-					constructor: messengerComponent
+					constructor: MessengerComponent
 				}
 			}
+		},
+		article_add: {
+			render: {
+				model: true,
+			},
+			title: 'Cikk hozzáadása',
+			template: 'articleAddPage',
+		},
+		article_index: {
+			title: 'Cikkek',
+			render: {
+				model: true,
+			},
+			template: 'articlePage',
+		},
+		article_view: {
+			title: 'Cikkek',
+			render: {
+				model: true,
+			},
+			template: 'articleViewPage',
 		},
 		home_index: {
 			title: 'A Gyülekezet Főoldala',
@@ -753,6 +787,7 @@
 			template: 'homePage',
 			component: {
 				newsCalendar: {
+					name: 'newsCalendar',
 					// start with day view mod (0-3)
 					viewMode: 0,
 					id: 'news',
@@ -833,6 +868,16 @@
 			render: {
 				model: 'Api.YouTube'
 			},
+			component: {
+				youtubeViewer: {
+					name: 'youtubeViewer',
+					storeData: true,
+					relationship: {
+						modal: 'modal'
+					},
+					constructor: YoutubeViewerComponent
+				}
+			},
 			template: 'videoList',
 		},
 		gallery_index: {
@@ -896,12 +941,19 @@
 			},
 			template: 'albumImageList',
 			component: {
+				imageViewer: {
+					name: 'imageViewer',
+					storeData: true,
+					relationship: {
+						modal: 'modal'
+					},
+					constructor: ImageViewerComponent
+				},
 				imageAdministration: {
 					condition: {
 						role: 2
 					},
 					workArea: '.image-box-container',
-					storeData: true,
 					name: 'imageAdministration',
 					selectElem: '#admin_album_list',
 					datasource: {
@@ -912,6 +964,7 @@
 						upload: MODEL_PATH+'Image.php?action=upload',
 					},
 					relationship: {
+						viewer: 'imageViewer',
 						menu: 'contextMenu',
 						upload: 'fileUploader'
 					},
@@ -943,14 +996,6 @@
 				}
 			},
 		},
-		/*
-		audio_index: {
-			title: 'Dicséretek',
-			render: {
-				model: true,
-			},
-			template: 'audioList',
-		},*/
 		event_index: {
 			title: "Események",
 			render: {
@@ -959,6 +1004,7 @@
 			template: 'eventPage', // fix to event index
 			component: {
 				guestCalendar: {
+					name: 'guestCalendar',
 					viewMode: 0,
 					range: {
 						min: 2000,
@@ -977,6 +1023,7 @@
 					constructor: Calendar
 				},
 				newsCalendar: {
+					name: 'newsCalendar',
 					viewMode: 0,
 					range: {
 						min: 2000,
@@ -1026,128 +1073,32 @@
 	};
 
 	// ------------------------------------------------------
-	// ---------------------- PopUp -------------------------
-	// ------------------------------------------------------
-
-
-	var popUp = {
-		window: null,
-		close: null,
-		modal: null,
-		content: null,
-		dataList: null,
-		dataIndex: 0,
-		closeHandler() {
-			let hrefArr = location.href.split('/');
-			// remove the index from url, ie. image/1/2 => 2
-			hrefArr.pop();
-			this.window.classList.add('hidden', 'fade-in');
-			// remove window content
-			this.content.innerHTML = "";
-			// reset index if window is closed
-			this.dataIndex = 0;
-			// change back the url
-			router.virtualRedirect(hrefArr.join('/'));
-
-			if (this.modal) {
-				this.modal.classList.add('hidden');
-			}
-		},
-		type: {
-			youtube: {
-				template: 'popUpVideo',
-			},
-			image: {
-				template: 'popUpAlbumImage',
-			}
-		},
-		render (str, replaceIndex) {
-
-			try {
-				var rawData = str.split('/'),
-					[type, index] = rawData,
-					dataList = popUp.dataList,
-					dataLen = dataList.length,
-					direction = { next: 1, previous: -1},
-					dataIndex = parseInt(popUp.dataIndex, 10);
-
-				if (dataIndex > 0) {replaceIndex = true;}
-
-				if (direction[index]) {
-					let nextIndex = (dataIndex == 0 ? 1 : dataIndex) + direction[index];
-					if (nextIndex < 1 || nextIndex > dataLen) {  return console.log('return because cannot go to '+index); }
-					replaceIndex = true;
-					index = nextIndex;
-				}
-
-				var	selectedData = this.dataList[index-1],
-					template = this.type[type].template,
-					urlArr = location.href.split('/');
-			} catch(err) {
-				return notify.add(err.message, 'error');
-			}
-
-			this.dataIndex = index;
-			if (replaceIndex) {
-				let arrEnd = urlArr.length-1;
-				urlArr[arrEnd] = index;
-			} else {
-				urlArr.push(index);
-			}
-			router.virtualRedirect(urlArr.join('/'));
-			this.content.innerHTML = view.getContent(template, selectedData);
-
-			if (this.window.classList.contains('hidden')) {
-				this.window.classList.remove('hidden', 'fade-in');
-			}
-
-			if (this.modal) {
-				this.modal.classList.remove('hidden');
-			}
-		},
-		setData(list=null, index=null) {
-			this.dataList = list;
-			if (!index && index != 0) {
-				this.dataIndex = index;
-			}
-		}
-	};
-
-	// ------------------------------------------------------
 	// ---------------------- View -------------------------
 	// ------------------------------------------------------
 
 
-	function View (middleware) {
+	function View () {
 
 		const rFunc = {
-			setPopUpData(list=null, index=null) {
-				popUp.setData(list, index);
-			},
-
-			popUpRender(str, replaceIndex=false) {
-				popUp.render(str, replaceIndex);
-			},
-
 			preloadImage(cacheKey, pathKey = 'path'){
 				let global = pages.global,
 					cacheTrash = global.cacheTrash,
 					cache = global.cache,
-					dataList = popUp.dataList,
 					data, path, images = "", timer;
-				if (cache[cacheKey] || !cacheTrash) { return console.log('the image group was alread cached'); }
+				if (cache[cacheKey] || !cacheTrash) { return console.log('the image group was already cached'); }
 
 				//but now we want async preload
 				timer = setTimeout(() => {
-					for (data of dataList) {
+					const imageList = pages.current.data[0][2];
+					for (data of imageList) {
 						path = data[pathKey];
 						if (!path) { continue; }
 						images += `<img src='${THUMBNAIL_PATH+path}'>`;
 						images += `<img src='${GALLERY_PATH+path}'>`;
 					}
-					console.log('preloaded: '+dataList.length+' image');
+					console.log('preloaded: '+imageList.length+' image');
 					cacheTrash.innerHTML = images;
-				},1);
+				}, 1);
 				cache[cacheKey] = true;
 			},
 			multicall(packets, renderFunc){
@@ -1168,10 +1119,10 @@
 
 
 		const tFunc = {
-			audioPlayer(title) {
+			audioPlayer(setup) {
 				return `<div id="audioPlayer">
 						<div class="header not_selectable">
-							${title}
+							${setup.title}
 							<div class="close"><a href="*" data-action="toggle/audioPlayer">&times;</a></div>
 						</div>
 						<div class="details not_selectable">
@@ -1182,9 +1133,9 @@
 							<input class="track" type="range" min="0" max="0"><br>
 
 							<div class="volume_row">
-								<span class="loop_icon" title="If audio reach to the end then jump to next audio file">&infin;</span>
-								<span class="anchor_icon" title="If loop is on then same audio will be played after it is ended">&#9875;</span>
-								<span class="random_icon" title="Next audio will be random">&#x2608;</span>
+								<span class="loop_icon" href="*" data-action="component/${setup.name}/button/loopButton" title="If audio reach to the end then jump to next audio file">&infin;</span>
+								<span class="anchor_icon" href="*" data-action="component/${setup.name}/button/anchorButton" title="If loop is on then same audio will be played after it is ended">&#9875;</span>
+								<span class="random_icon" href="*" data-action="component/${setup.name}/button/randomButton" title="Next audio will be random">&#x2608;</span>
 								<span class="spacer"></span>
 								<span class="speaker_icon" title="Change audio volume">&#128266;</span>
 								<span class="volume_bar">
@@ -1194,9 +1145,9 @@
 								</span>
 							</div>
 							<center>
-								<div class="button play">&#9205;</div>
-								<div class="button pause">&#9208;</div>
-								<div class="button stop">&#9209;</div>
+								<div href="*" data-action="component/${setup.name}/button/playButton" class="button play">&#9205;</div>
+								<div href="*" data-action="component/${setup.name}/button/pauseButton" class="button pause">&#9208;</div>
+								<div href="*" data-action="component/${setup.name}/button/stopButton" class="button stop">&#9209;</div>
 							</center>
 						</div>
 						<div class="container">
@@ -1204,24 +1155,6 @@
 							<input type="range" class="scrollBar" value="0" min="0" max="100">
 						</div>
 				</div>`;
-			},
-			popUpAlbumImage(d){
-				return `<div class="image-container">
-							<div class="image-src-side">
-								<img src="${GALLERY_PATH+d.path}">
-								<div class="leftCarousel"><a href='*' data-action='popup/image/previous'> &#10096; </a></div>
-								<div class="rightCarousel"><a href='*' data-action='popup/image/next'> &#10097; </a></div>
-							</div>
-							<div class="image-data-side">
-								${d.description}<br>
-								<time datetime="${d.created}">${d.created.split('-').join('.')}</time>
-							</div>
-						  </div>`;
-			},
-			popUpVideo(d){
-				return `<div class="video-container">
-							<iframe src="https://www.youtube.com/embed/${d.id}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-						</div>`;
 			},
 			videoPlaylist(d){
 				let str = "";
@@ -1235,11 +1168,10 @@
 				return 	`<div class="video-box-container">${str}</div>`;
 			},
 			videoList(d){
-				console.log(d);
 				let str = "";
 				d.forEach(e => {
 					str += `<div class="video-box">
-								<a href="*" data-action="popup/youtube/${e.index}" title="${e.title} playlist">
+								<a href="*" data-action="component/youtubeViewer/show/${e.id}" title="${e.title} playlist">
 									<img src="${e.img}" alt="${e.title} cover">
 									<p><b>${e.title}</b></p>
 							</a></div>`;
@@ -1252,7 +1184,7 @@
 				}
 				return `<div class='album-box' id='album_${e.id}' data-id="${e.id}" data-context="true">
 						${chckbx}
-						<a href='/gallery/album/${e.id}' title='${e.title} album: ${e.description}'>
+						<a href='/gallery/album/${e.slug}' title='${e.title} album: ${e.description}'>
 							<img src='${THUMBNAIL_PATH+(e.coverImage || "empty.png")}' alt='${e.title}'>
 							<p><span class="title">${e.title}</span>(${e.created})</p>
 						</a>
@@ -1275,7 +1207,7 @@
 				}
 				return `<div class='image-box' id='image_${i.id}' data-id="${i.id}" data-context="true">
 						${chckbx}
-						<a href='*' data-action='popup/image/${i.index}' title='${i.description}'>
+						<a href='*' data-action="component/imageViewer/show/${i.index}" title='${i.description}'>
 							<img src='${THUMBNAIL_PATH+i.path}' alt='${i.description}'>
 						</a>
 					</div>`;
@@ -1284,7 +1216,7 @@
 				const chckbx = Auth.role > 2 ? "<input type='checkbox' name='images[]'>" : '';
 				let [selAlbum, albumList, imageList] = data, albums = "", images = "";
 				albumList.forEach(a => {
-					albums += `<li><a href='/gallery/album/${a.id}' title='${a.title}'>${a.title}</a></li>`;
+					albums += `<li><a href='/gallery/album/${a.slug}' title='${a.title}'>${a.title}</a></li>`;
 				});
 				imageList.forEach(i => {
 					images += tFunc.albumImageCreate(i, chckbx);
@@ -1322,7 +1254,7 @@
 						</div>`;
 			},
 			errorMsg(d) { return `<b>Error ${d.id}:</b> ${ERROR_MSG[d.id]}`; },
-			loginForm(){ return	`<div class="modal-layer chrr_trnspnt_bg"></div>
+			loginForm() { return	`<div class="modal-layer chrr_trnspnt_bg"></div>
 						<div class="modal-layer lght_blck_trnspnt_bg"></div>
 						<div class="form_window" id="login_Form" data-method="POST" data-action="user/login">
 							<h1>Bejelentkezés</h1><br>
@@ -1332,10 +1264,9 @@
 							<a href="/user/registration"><button class="button col-gray"> Regisztrálás </button></a>
 							<br><br>
 							<a href="/home"><button class="button col-gray"> Vissza </button></a>
-							<br><br>
-							<a href="#" class="disabled underlined">Elfelejtette a jelszavat?</a>
 						</div>`; },
-			signupForm(){ return	`<div class="modal-layer brwn_trnspnt_bg"></div>
+						//<a href="#" class="disabled underlined">Elfelejtette a jelszavat?</a>
+			signupForm() { return	`<div class="modal-layer brwn_trnspnt_bg"></div>
 						<div class="modal-layer sm_blck_trnspnt_bg"></div>
 						<div class="form_window" id="signup_Form" data-method="POST" data-action="user/add">
 							<h1>Regisztrálás</h1><br>
@@ -1387,13 +1318,28 @@
 							</div>
 						</aside>`
 			},
-			scheduleBox(array) {
-				let str = '<h1>Program</h1>';
-				for (let schedule of array) {
+			scheduleBox(data) {
+				let str = "<h1>Program</h1>",
+					inputs = `<div id="scheduleEdit_Form" data-method="POST" data-action="schedule/edit">`,
+					edit = Auth.role > 2 ? `<a href="*" data-action="toggle/schedule_view_div,schedule_edit_div" class="btn type-4 edit">⚙</a>` : ``,
+					editDiv = "",
+					ids = [];
+
+				for (let schedule of data) {
 					str += `<div class="schedule"><h2>${schedule.event_name}</h2><p>${schedule.event_at}</p></div>`;
+					inputs += `<input id="scheduleEdit_event_name" name="scheduleEdit_event_name_${schedule.id}" value="${schedule.event_name}" type="text" placeholder="Megnevezés" title="A megnevezés hossza 3 és 100 karakter között kell lennie" data-rule="STRING,3,100">
+						<input id="scheduleEdit_event_at" name="scheduleEdit_event_at_${schedule.id}" value="${schedule.event_at}" type="text" placeholder="Megnevezés" title="A megnevezés hossza 3 és 100 karakter között kell lennie" data-rule="STRING,3,100">`;
+					ids.push(schedule.id);
 				}
 
-				return '<div class="scheduleBox"><div class="content">'+str+'<br><br><br><h3>Mindenkit szeretettel várunk!</h3></div></div>';
+				inputs += `<input id="scheduleEdit_id" name="scheduleEdit_ids" value="${ids.join(',')}" type="text" data-rule="STRING,0,11" class="hide">
+				<br><br><a href="*" data-action="submit/scheduleEdit" title="Mentés" class="btn type-3"> Ment </a></div>`;
+				if (Auth.role > 2) { editDiv = `<div class="edit_box text-center" style="display: none;" id="schedule_edit_div"><h3>Változtatás!</h3><br> ${inputs} </div>`; }
+				return `<div class="scheduleBox">${edit}
+						<div class="content">
+							<div id="schedule_view_div"> ${str}<br><br><br><h3>Mindenkit szeretettel várunk!</h3></div>
+							${editDiv}
+						</div></div>`;
 			},
 			guestBox(array) {
 				let str = '<h1>Vendégek</h1>';
@@ -1450,15 +1396,80 @@
 				</div>`;
 				return str;
 			},
+			articleAddPage(data) {
+				const { categories, article = {title: "", id: 0, category_slug: "", content: ""} } = data,
+					cat_slugs = Object.keys(categories), maxRank = USER_RANK.length,
+					title = article.title.length ? "Cikk szerkesztés" : 'Cikk hozzáadása';
+				let catOpts = "", rankOpts = "";
+				document.title = title;
+				for (let slug of cat_slugs) {
+					catOpts += `<option value="${slug}" ${slug == article.category_slug ? "selected" : ""}>${categories[slug]}</option>`;
+				}
+				for (let i=0;i<maxRank;i++ ) {
+					rankOpts += `<option value="${i}" ${i == article.rank ? "selected" : ""}>${USER_RANK[i]}</option>`;
+				}
+				return `<div class="form_content" id="articleAdd_Form" data-method="POST" data-action="article/add">
+							<h1>${title}</h1><br>
+							<input id="articleAdd_id" class="hide" name="articleAdd_id" value="${article.id}" type="number" title="Wrong id" data-rule="INTEGER,0,11">
+							<div class="wrapper">
+								<select id="articleAdd_category_slug" name="articleAdd_category_slug">${catOpts}</select>
+								<select id="articleAdd_rank" name="articleAdd_rank">${rankOpts}</select>
+								<input id="articleAdd_title" name="articleAdd_title" value="${article.title}" type="text" placeholder="Teljes név" title="A cím hossza 3 és 100 karakter között kell lennie" data-rule="STRING,3,100">
+							</div>
+							<textarea id="articleAdd_content" name="articleAdd_content" placeholder="Szöveg" title="A szöveg hossza 5 és 65535 karakter között kell lennie" data-rule="STRING,5,65535">${article.content}</textarea>
+							<a href="*" data-action="submit/articleAdd" class="btn type-3" title="Cikk lementése"> Elment </a>
+						</div>`;
+			},
+			articleViewPage (data) {
+				const article = data.article,
+					toolbar = Auth.role > 2 ? `<div class="tools text-right">
+						<div class="form_content" id="articleDel_Form" data-method="POST" data-action="article/delete" class="hide">
+							<input id="articleDel_id" name="articleDel_id" value="${article.id}" type="hidden" data-rule="INTEGER,0,11" class="hide">
+						</div>
+						<a href="/article/add/${article.slug}" class="btn type-3">⚙</a>
+						<a href="*" data-action="submit/articleDel" class="btn type-2">&times;</a>
+					</div>` : ``;
+				if (!article) {
+					return `<div class="content"><div class="no_article">... nem található ez a cikk ...</div></div>`;
+				}
+				setTimeout( () => document.title = 'Cikk: '+article.title, 100);
 
+				return `${toolbar}
+					<div class="title">${article.title}</div>
+					<div class="content">${article.content}</div>`;
+			},
+			articlePage (data) {
+				const {categories, selected, articles} = data,
+					addButton = Auth.role > 2 ? `<a href="/article/add" class="add-link"><div class="menu-icon add-icon"></div></a>` : ``;
+				setTimeout( () => document.title = 'Cikkek: '+categories[selected], 100);
+				let catList = "", artList = "", slugs = Object.keys(categories);
+				for (let slug of slugs) {
+					if (slug == selected) { continue; }
+					catList += `<a href="/article/${slug}" title="Kiválaszt: ${categories[slug]}">${categories[slug]}</a>`;
+				}
+
+				if (articles.length) {
+					for (let article of articles) {
+						artList += `<a href="/article/view/${article.slug}">${article.title}</a>`;
+					}
+				} else {
+					artList = `<div class="no_article">... nem található egy cikk sem ...</div>`;
+				}
+
+				return `
+					<input type="checkbox" id="article_toggle">
+					<label for="article_toggle"><a title="${categories[selected]}">${categories[selected]}${catList}</a></label>
+					${addButton}
+				<div class="content"><div>${artList}</div></div>`;
+			},
 			guestbookComment( {id, name, created, message, userId} = data ) {
 				let condition =  (Auth.role > 1 || (userId == Auth.userId) && userId != 0),
 					del = (id, type) => condition ? `<span class="${type}"><a href="*" data-action="component/Guestbook/delete/${id}">&times;</a></span>` : '',
 					edit = (id, type, userId) => condition ? `<span class="${type}"><a href="*" data-action="component/Guestbook/fill/${id}">&#9881;</a></span>` : '';
 				return `<div class="comment" id="comment_${id}">
-									<span class="name">${name}</span> <span class="time">${created}</span>${del(id, 'delete')+edit(id, 'edit', userId)}
-									<div class="message">${message}</div>
-								</div>`;
+							<span class="name">${name}</span> <span class="time">${created}</span>${del(id, 'delete')+edit(id, 'edit', userId)}
+							<div class="message">${message}</div>
+						</div>`;
 			},
 			guestbook (data) {
 					let str = data.length === 0 ? `<h2>Nincs bejegyzés</h2>` : ``, comment,
@@ -1475,8 +1486,7 @@
 						<a href="*" data-action="component/Guestbook/add"><button class="button col-gray reg"> Rendben </button></a>
 						<a href="*" data-action="toggle/addComment_Form"><button class="button col-gray reg"> Megse </button></a>
 						</div>
-						</div>
-						`;
+						</div>`;
 					for (comment of data) {
 						str += this.guestbookComment(comment);
 					}
@@ -1486,46 +1496,20 @@
 			audioTableRow(d) {
 				let str = '', a;
 				for (a of d) {
-					console.log(a);
 					str += `<tr class="audio_id_${a.id}">
 										<td>${a.title}</td>
 										<td>${a.duration}</td>
 										<td>remove/edit</td>
 									</tr>`;
 				}
-
 				return str;
 			},
 			audioList(d) {
-
 				return `<div class="audioList"><h1>Dicséretek</h1>
 								<table>${this.audioTableRow(d)}</table>
 								</div>`;
 			},
-
-			popUpContentImage(path, filename, uploaded, description) {
-				return `
-					<div class="image-container">
-						<div class="image-src-side">
-							<img src="${path}${filename}">
-							<div class="leftCarousel"><a href='*' data-action='popup/image/previous'> &#10096; </a></div>
-							<div class="rightCarousel"><a href='*' data-action='popup/image/next'> &#10097; </a></div>
-						</div>
-						<div class="image-data-side">
-							<time datetime="${uploaded}">${uploaded}</time><br><br>
-								${description}
-						</div>
-					</div>`;
-			},
-			popUpContentVideo: function(id){
-				return `<div class="video-container">
-							<iframe src="https://www.youtube.com/embed/${id}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-						</div>`;
-			},
-
-
 			pageContainer(cntrllr, ctn, tmplt) { return `<div class="${cntrllr}"><div class="${ctn} fadeOut">${tmplt}</div></div>`; },
-
 		};
 
 		function refreshDOMVisibility() {
@@ -1564,7 +1548,7 @@
 				["*","Dicséretek halgatása","worship","Énekek",'toggle/audioPlayer',1],
 				["http://biblia.gyozelem.ro","Ugrás az Online Biblia oldalra","bible","Biblia",'',0],
 				["/guestbook","Üzenőfal megtekintése","wall","Üzenőfal",'',0],
-				["/articles","Cikkek megtekintése","articles","Cikkek",'',0],
+				["/article","Cikkek megtekintése","articles","Cikkek",'',0],
 				["/user","Felhasználók megtekintése","users","Felhasználók",'',1],
 				["*","Üzenetek megtekintése","messages",null,'component/messageCenter/toggle',1],
 				["*","Beállítások megtekintése","settings",null,'component/settingsManager/toggle',1],
@@ -1661,7 +1645,7 @@
 						setTimeout(() => {
 							c = component[key];
 							pages.current.component[key] = new c['constructor'](c, ajax);
-						}, 1000);
+						}, 300);
 					} else {
 						currentComp[key].remove();
 						delete pages.current.component[key];
@@ -1759,10 +1743,6 @@
 					delete pages.current[key];
 				}
 			}
-			// if popUp is opened then we close
-			if (popUp.dataIndex !== 0) {
-				popUp.closeHandler();
-			}
 		}
 
 		return {
@@ -1770,7 +1750,6 @@
 				return tFunc[template](data);
 			},
 			render(func, data){
-				console.log(func,data);
 				if (!rFunc[func](...data)) { return console.log('multicall error: '+func+' not exist');}
 			},
 			multicall(data) {
@@ -1778,7 +1757,6 @@
 				data.forEach(e => {
 					renderFunc = e.pop();
 					if (renderFunc === "build") {
-						console.log(e);
 						build(e);
 					} else {
 						if (!rFunc[renderFunc]) { return console.log('multicall error: '+renderFunc+' not exist');}
@@ -1804,23 +1782,10 @@
 
 
 	function Controller(middleware){
-		// cachein popUp object properties
 		let global = pages.global;
-		//popUp = global.popUp;
 		global.body = document.querySelector('body');
 		global.pageContent = global.body.querySelector('.content.page');
-		popUp.window = document.querySelector('.popUp');
-		popUp.close = popUp.window.querySelector('.close');
-		popUp.content = popUp.window.querySelector('.content');
 		global.cacheTrash = document.querySelector('.cacheTrash');
-
-		if (popUp.window.dataset.modal === "true") {
-			popUp.modal = document.querySelector('.modal-layer.page-modal');
-			//popUp.modal = document.querySelector('.modal-layer.page-modal');
-		}
-		popUp.close.addEventListener('click', () => {
-			popUp.closeHandler();
-		});
 
 
 		// assign function for middleware with a keyword
@@ -1853,10 +1818,6 @@
 					console.log('controller: redirect to model and get data');
 					model.getPageData(controller, action, param);
 				}
-				console.log('model render');
-			// i dont know yet, maybe i will remove this option in future
-			} else if(render.view && typeof render.view === "string") {
-				// i dont know this yet
 			}
 		}
 	}
@@ -1873,19 +1834,16 @@
 		add (label, callback=null){
 			if (typeof label === "string") {
 				this.handler[label] = callback;
-				//console.log('Register handler: '+label+' ['+this.handler[label].toString()+']');
 			}
 		}
 		run (label, data) {
 			if (typeof label === "string" && typeof this.handler[label] ==="function") {
 				this.handler[label](data);
-				//console.log('Run handler: '+label+' ['+this.handler[label].toString()+']');
 			}
 		}
 		remove (label){
 			if (typeof label === "string" && this.handler[label]) {
 				delete this.handler[label];
-				//console.log('Remove handler: '+label+' ['+this.handler[label].toString()+']');
 			}
 		}
 	}
@@ -1914,7 +1872,7 @@
 				clearTimeout(notifyList[id].timer);
 				delete notifyList[id];
 			},
-			notifyCloseHandler = function(){
+			notifyCloseHandler = function() {
 				close(this.parentElement.id);
 			};
 		let notifyList = {},
@@ -1983,14 +1941,14 @@
 	// -----------------------------------------------------------
 
 
-	function Calendar(settings={range:{}}) {
+	function Calendar(settings={range:{}}, req) {
 		let calendar, calId, calBody, calHeader, selDate, currentDate, calPrev, calNext, calView, selected, render,
 		yearStack = [], yearStackIndex, callback, eventData, selEvents, dateKey,
 		dayShort = ['Mon', 'Tue', 'Wed', 'Tue', 'Fri', 'Sat', 'Sun'], eventForm, datasource,
 		viewMode, calMode = ['Day', 'Month', 'Year', 'YearStack', 'reserved', 'Event'],
 		monthName = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-		function nextHandler() {
+		function nextButton() {
 			if (viewMode === 0) {
 				selDate.string = selDate.month === 12 ? `${selDate.year+1} 1 2 01:00:00` : `${selDate.year} ${selDate.month+1} 02 01:00:00`;
 			} else if (viewMode === 1) {
@@ -2015,7 +1973,7 @@
 			}
 		}
 
-		function prevHandler() {
+		function prevButton() {
 			if (viewMode === 0) {
 				selDate.string = selDate.month === 1 ? `${selDate.year-1} 12 2 01:00:00` : `${selDate.year} ${selDate.month-1} 02 01:00:00`;
 			} else if (viewMode === 1) {
@@ -2041,7 +1999,7 @@
 				: '';
 		}
 
-		function saveEvent() {
+		function saveButton() {
 			let title = eventForm.title.value.trim(),
 				message = eventForm.message.value.trim(),
 				date = calView.dataset.lastDate,
@@ -2057,7 +2015,7 @@
 			if (!title || !message || !time) { return alert('Please fill the fields!');}
 			// save to database
 			// we add only in callback
-			ajax.post(
+			req.post(
 				datasource.add,
 				{ param: newEvent },
 				data => {
@@ -2073,12 +2031,11 @@
 					}
 					changeViewMode(0, date);
 				},
-				//data => notify.add(data, 'error')
-				data => console.log(data.error)
+				debug
 			);
 		}
 
-		function deleteEvent(){
+		function deleteButton() {
 			let index = parseInt(eventForm.select.value, 10),
 				date = calView.dataset.lastDate,
 				dateArray = getDateArray(date),
@@ -2087,7 +2044,7 @@
 			// need ajax remove and we do this in callback
 
 
-			ajax.get(
+			req.get(
 				datasource.delete,
 				{ param: {id: selEvents[index].id } },
 				data => {
@@ -2101,7 +2058,7 @@
 					obj.list.splice(index, 1);
 					changeViewMode(0, date);
 				},
-				data => console.log(data.error)
+				debug
 			);
 		}
 
@@ -2109,7 +2066,11 @@
 			let dateArr = getDateArray(date), obj = eventData;
 			for (let key of dateArr) {
 				key = parseInt(key, 10);
-				if (obj[key]) { obj = obj[key]; } else { console.log('no event at: '+date);return ''; }
+				if (obj[key]) {
+					obj = obj[key];
+				} else {
+					return console.log('no event at: '+date);
+				}
 			}
 			return obj.list;
 		}
@@ -2135,7 +2096,7 @@
 			}
 		}
 
-		function changeEventHandler(){
+		function changeEventHandler() {
 			const index = eventForm.select.value;
 			eventForm.title.value = index > -1 ? selEvents[index].title : '';
 			eventForm.message.value = index > -1 ? selEvents[index].message : '';
@@ -2152,7 +2113,7 @@
 			viewMode = vMode;
 		}
 
-		function increaseViewMode(){
+		function increaseViewButton() {
 			if (viewMode === 5) {
 				changeViewMode(0, calView.dataset.lastDate);
 			//old condition viewMode < calMode.length - 1
@@ -2191,7 +2152,12 @@
 
 		let template = {
 			window(id) { return '<div class="ev-cal" id="cal_'+id+'" style="display:none;"></div>'; } ,
-			content: '<div class="head"><div><a class="prev-index">&#8249;</a><p class="view-mode"></p><a class="next-index">&#8250;</a><a href="*" data-action="toggle/cal_'+settings.id+'" class="close">&times;</a></div></div></div></div><div class="body"></div>',
+			content: `<div class="head"><div>
+				<a class="prev-index" href="*" data-action="component/${settings.name}/prevButton">&#8249;</a>
+				<p class="view-mode" href="*" data-action="component/${settings.name}/increaseViewButton"></p>
+				<a class="next-index" href="*" data-action="component/${settings.name}/nextButton">&#8250;</a>
+				<a class="close" href="*" data-action="toggle/cal_${settings.id}">&times;</a></div></div>
+				</div></div><div class="body"></div>`,
 			cell(str) { return "<div class='cell'>"+str+"</div>"; },
 			subHead(days) {
 				let str = "";
@@ -2213,12 +2179,20 @@
 			option(value, text) {
 				return '<option value="'+value+'">'+text+'</option>';
 			},
-			newEventForm: '<div class="newEventForm"><input type="text" placeholder="Event title" class="title"> <textarea placeholder="Event description" class="message"></textarea><select></select><input type="text" class="time" placeholder="Time hh:mm" value="08:00"><button class="save">Save</button><button class="remove">Delete</button><div class="eventList"></div></div>'
+			newEventForm: `<div class="newEventForm">
+				<input type="text" placeholder="Event title" class="title">
+				<textarea placeholder="Event description" class="message"></textarea>
+				<select></select>
+				<input type="text" class="time" placeholder="Time hh:mm" value="08:00">
+				<button href="*" class="save" data-action="component/${settings.name}/saveButton">Save</button>
+				<button href="*" class="remove" data-action="component/${settings.name}/deleteButton">Delete</button>
+				<div class="eventList"></div>
+				</div>`
+
 		}
 
 		function loadData(datasource){
-
-			ajax.get(datasource.get, {}, data => {
+			req.get(datasource.get, {}, data => {
 					addEvents({
 						list: data.modelData[0],
 						key: data.modelData[1]
@@ -2247,14 +2221,9 @@
 			calendar.classList.add('v'+calMode[viewMode]);
 			calendar.innerHTML = template.content;
 			calHeader = calendar.querySelector('.head');
-			calPrev = calHeader.querySelector('.prev-index');
-			calNext = calHeader.querySelector('.next-index');
 			calView = calHeader.querySelector('.view-mode');
 			calBody = calendar.querySelector('.body');
 			calBody.addEventListener("click", pickDateHandler);
-			calPrev.addEventListener("click", prevHandler);
-			calNext.addEventListener("click", nextHandler);
-			calView.addEventListener("click", increaseViewMode);
 			calHeader.insertAdjacentHTML( 'afterend', template.subHead(dayShort)+template.newEventForm);
 			eventDiv = calendar.querySelector('.newEventForm');
 			eventForm = {
@@ -2269,8 +2238,6 @@
 
 			eventForm.list.addEventListener("click", pickEventHandler);
 			eventForm.select.addEventListener("change", changeEventHandler);
-			eventForm.save.addEventListener("click", saveEvent);
-			eventForm.remove.addEventListener("click", deleteEvent);
 			datasource = settings.datasource;
 
 			currentDate = {
@@ -2443,7 +2410,6 @@
 			selectNewYear(dateTime=null, index=null) {
 				let row, cell, selected, c, r, i = 0, status, year,
 					selYearStack = index || currentDate.yearStackIndex,
-					//selYearStack = isNaN(yearStackIndex) ? currentDate.yearStackIndex : yearStackIndex,
 					start = yearStack[selYearStack][0],
 					end = yearStack[selYearStack][1],
 					fragment = document.createDocumentFragment(), selDate;
@@ -2542,17 +2508,27 @@
 		function remove() {
 			eventForm.list.removeEventListener("click", pickEventHandler);
 			eventForm.select.removeEventListener("change", changeEventHandler);
-			eventForm.save.removeEventListener("click", saveEvent);
-			eventForm.remove.removeEventListener("click", deleteEvent);
 			calBody.removeEventListener("click", pickDateHandler);
-			calPrev.removeEventListener("click", prevHandler);
-			calNext.removeEventListener("click", nextHandler);
-			calView.removeEventListener("click", increaseViewMode);
 		}
 
 		init();
 
 		return {
+			nextButton() {
+				nextButton();
+			},
+			prevButton() {
+				prevButton();
+			},
+			deleteButton() {
+				deleteButton();
+			},
+			saveButton() {
+				saveButton()
+			},
+			increaseViewButton() {
+				increaseViewButton();
+			},
 			dom: calendar,
 			remove() {
 				remove();
@@ -2565,7 +2541,7 @@
 	// ------- Client side handler for guestbook crud actions --------
 	// ---------------------------------------------------------------
 
-	function GuestbookComponent (setup, ajax) {
+	function GuestbookComponent (setup, req) {
 		const componentKey = setup.name,
 			formPrefix = setup.form.name,
 			formName = formPrefix+'_Form',
@@ -2573,7 +2549,7 @@
 			form = document.getElementById(formName);
 
 			function deleteData(id) {
-				ajax.post(
+				req.post(
 					setup.datasource.delete,
 					{ param: {id:id} },
 					data => {
@@ -2676,8 +2652,8 @@
 	// --------------------------------------------------------------------------
 
 
-	function AudioPlayer (setup, ajax=false) {
-		document.getElementById('App').insertAdjacentHTML('afterend', view.getContent ('audioPlayer', 'Lejátszó'));
+	function AudioPlayer (setup, req=false) {
+		document.getElementById('App').insertAdjacentHTML('afterend', view.getContent ('audioPlayer', {title: "Lejátszó", name: setup.name}));
 		let audio = new Audio(), str = '', id = Math.random().toString(36).substr(2, 9),
 			player = {
 				dom: {
@@ -2713,12 +2689,12 @@
 					if (player.currentSong !== -1) {
 						document.getElementById("audio_"+id+"_"+player.currentSong).classList.remove('selected');
 					}
-					player.handler.stop();
+					player.handler.stopButton();
 					player.currentSong = index;
-					player.handler.play();
+					player.handler.playButton();
 				},
 				handler: {
-					play() {
+					playButton() {
 						if (player.play) { return; }
 						let dom = player.dom;
 						if (player.currentSong === -1) {
@@ -2734,7 +2710,7 @@
 						dom.duration.innerHTML = currentSong.duration;
 						dom.currentTime.classList.remove('blink');
 					},
-					stop(){
+					stopButton() {
 						let dom = player.dom;
 						player.currentTime = 0;
 						dom.currentTime.innerHTML = getDuration(player.currentTime);
@@ -2743,36 +2719,33 @@
 						player.play = false;
 						dom.currentTime.classList.remove('blink');
 					},
-					pause(){
+					pauseButton() {
 						if (!player.play) { return; }
 						player.currentTime = ~~audio.currentTime;
 						audio.pause();
 						player.play = false;
 						player.dom.currentTime.classList.add('blink');
 					},
-					change(e){
+					changeAudio(e) {
 						let index = e.target.dataset.index;
 						if (index) { player.select(e.target.dataset.index); }
 					},
-					changeLoopHandler(){
-						// 1 - true = 0 or 1 - false =  1 :) i love this
-						player.loop = 1 - player.loop;
+					loopButton() {
+						player.loop = !player.loop;
 						player.dom.loopIcon.classList[player.loop ? 'add' : 'remove']('select');
 					},
-					changeAnchorHandler(){
-						// tenary :)
-						player.anchor = player.anchor ? false : true;
+					anchorButton() {
+						player.anchor = !player.anchor;
 						player.dom.anchorIcon.classList[player.anchor ? 'add' : 'remove']('select');
 					},
-					changeRandomHandler(){
-						// another method :)
+					randomButton(){
 						player.random = !player.random;
 						player.dom.randomIcon.classList[player.random ? 'add' : 'remove']('select');
 					},
 					setVolume (e){
 						setVolume(e.target.value);
 					},
-					audioEnded (){
+					audioEnded () {
 						if (player.loop) {
 							let currentSong = player.currentSong, index;
 
@@ -2789,7 +2762,7 @@
 					},
 				}
 			}, dummyAudio = [], dummyLen,
-			setCurrentTime = function(){
+			setCurrentTime = function() {
 				audio.currentTime = ~~player.currentTime;
 			},
 			setVolume = function(vol){
@@ -2798,21 +2771,21 @@
 				audio.volume = vol/100;
 				if (vol > 30) {
 					icon = icons[2];
-				}else if(vol > 1) {
+				} else if(vol > 1) {
 					icon = icons[1];
 				}
 				player.dom.spearkerIcon.innerHTML = icon;
 			},
-			setTrackMaxValue = function (){
+			setTrackMaxValue = function () {
 				player.dom.track.max = ~~audio.duration;
 
 			},
-			setTrack = function(e){
+			setTrack = function(e) {
 				let val = e.target.value;
 				audio.currentTime = val;
 				player.dom.currentTime.innerHTML = getDuration(val);
 			},
-			keys = Object.keys(player.button), handler, listTimer, playTimer, playlist;
+			handler, listTimer, playTimer, playlist;
 
 		//  ---- Player variable declaration end ---- :DD
 
@@ -2839,23 +2812,15 @@
 			audio.addEventListener('loadedmetadata', setTrackMaxValue);
 			dom.volume.addEventListener('change', handler.setVolume);
 			dom.track.addEventListener('change', setTrack);
-			dom.loopIcon.addEventListener('click', handler.changeLoopHandler);
-			dom.anchorIcon.addEventListener('click', handler.changeAnchorHandler);
-			dom.randomIcon.addEventListener('click', handler.changeRandomHandler);
 			audio.addEventListener('ended', handler.audioEnded);
-
-			Object.keys(player.button).forEach(function(b){
-				player.button[b] = main.querySelector('.'+b);
-				player.button[b].addEventListener('click', player.handler[b] );
-			});
 
 			setVolume(dom.volume.value);
 			player.loop = !player.loop;
 			player.anchor = !player.anchor;
 			player.random = !player.random;
-			handler.changeLoopHandler();
-			handler.changeAnchorHandler();
-			handler.changeRandomHandler();
+			handler.loopButton();
+			handler.anchorButton();
+			handler.randomButton();
 
 			player.list.forEach((a, i) => {
 				dummyAudio[i] = [new Audio(), i];
@@ -2878,8 +2843,7 @@
 			}, 200);
 		};
 
-		ajax.get('model/Audio.php?action=get', {}, data => init(data.modelData), debug);
-
+		req.get(setup.datasource.get, {}, data => init(data.modelData), debug);
 
 		function getDuration(s=0) {
 			return ('00'+~~(s/60)).slice(-2)+':'+('00'+s%60).slice(-2);
@@ -2893,7 +2857,7 @@
 			});
 			dom.list.insertAdjacentHTML('afterbegin', '<ul id="playlist_'+id+'">'+str+'</ul>');
 			playlist = document.getElementById("playlist_"+id);
-			playlist.addEventListener('click', player.handler.change);
+			playlist.addEventListener('click', player.handler.changeAudio);
 			dom.container.style.display = 'block';
 			dragdrop(dom.app, dom.head);
 			// we add our custom scrollbar and drag and drop functionality to window
@@ -2938,73 +2902,23 @@
 				scrollBar.value = 100/(scrllH-cntnrH+20)*content.scrollTop;
 			});
 		};
-	};
-
-	// --------------------------------------------------------------------------
-	// ------------------------- window drag and drop ---------------------------
-	// --------------------------------------------------------------------------
-
-	function dragdrop(e1, e2 = null) {
-		e1 = typeof e1 === "string" ? document.body.querySelector(e1) : e1;
-		e2 = typeof e1 === "string" ?  document.body.querySelector(e2 || e1) : e2;
-		e2.addEventListener('mousedown', dragHandler);
-		let body = document.body,
-			html = document.documentElement,
-			eWidth = e1.offsetWidth,
-			eHeight = e1.offsetHeight,
-			mWidth = Math.max(body.offsetWidth, html.offsetWidth)-eWidth,
-			mHeight =  Math.max(body.offsetHeight, html.offsetHeight)-eHeight,
-			cX, cY, x, y, pos = e1.style.position,
-			shiftX, shiftY,
-			moving = false;
-		console.log(e1);
-		e1.style.position = 'fixed';
-
-		function move(x, y) {
-			e1.style.left = x+'px';
-			e1.style.top = y+'px';
-		}
-
-		function mousemove (e) {
-			x = e.clientX-shiftX;
-			y = e.clientY-shiftY;
-			cX = x >  mWidth ? mWidth : x < 0 ? 0 : x;
-			cY = y >  mHeight ? mHeight : y < 0 ? 0 : y;
-		move(cX, cY);
-		}
-
-		function mouseup () {
-			body.removeEventListener('mousemove', mousemove);
-			body.removeEventListener('mouseup', mouseup);
-			moving = false;
-		}
-
-		function dragHandler(e){
-			if (moving) return;
-			moving = true;
-			body.addEventListener('mousemove', mousemove);
-			// use window => mouse could be released when pointer isn't over the body
-			window.addEventListener('mouseup', mouseup);
-			console.log('mouse up - draghandler');
-			shiftX = e.clientX - e1.offsetLeft;
-			shiftY = e.clientY - e1.offsetTop;
-		}
-
 		return {
+			button(which) {
+				if (player.handler[which]) {
+					player.handler[which]();
+				}
+			},
 			remove() {
-				body.removeEventListener('mousemove', mousemove);
-				body.removeEventListener('mousemove', mousemove);
-				window.removeEventListener('mouseup', mouseup);
-				e2.removeEventListener('mousedown', dragHandler);
+				// i dont add here anything because it is permanent component
 			}
 		}
-	}
+	};
 
 	// --------------------------------------------------------------------------
 	// ------------------------- ContextMenu constructor -------------------------
 	// --------------------------------------------------------------------------
 
-	function ContextMenu (setup) {
+	function ContextMenu (setup, req) {
 		const width = setup.style.width || 200,
 			id = 'contextmenu_'+Date.now();
 		let dom;
@@ -3082,7 +2996,7 @@
 	// ------------------------- FileUploader constructor -------------------------
 	// --------------------------------------------------------------------------
 
-	function FileUploader (setup) {
+	function FileUploader (setup, req) {
 		const limit = setup.limit;
 		let core = {
 			queue: [],
@@ -3171,7 +3085,7 @@
 				if (core.done.length) {
 					slidePanel();
 				}
-				ajax.file(arr.url, formData, uploadAnalyzer(arr.success, file, true), uploadAnalyzer(arr.error, arr, false));
+				req.file(arr.url, formData, uploadAnalyzer(arr.success, file, true), uploadAnalyzer(arr.error, arr, false));
 			}
 			refreshDOM();
 		}
@@ -3248,7 +3162,7 @@
 		// ------------------------- AlbumManager constructor -------------------------
 		// --------------------------------------------------------------------------
 
-		function AlbumManager (setup) {
+		function AlbumManager (setup, req) {
 			let albumData = pages.current.componentData[setup.name], e, dom, selAlbum, title, description, thumbContainer, chckbx, files, selectedAlbum;
 			const templates = {
 				main(setup) { return view.getContent ('adminSidePanelBone', ['albumManagerDiv',`
@@ -3257,7 +3171,7 @@
 									<select id="admin_album_list" name="setAlbum_id">
 										<option value="0">Új Album</option>
 									</select>
-									<input type="text" name="setAlbum_title" placeholder="Album név" data-rule="NAME_HUN,3,100">
+									<input type="text" name="setAlbum_title" placeholder="Album név" data-rule="STRING,3,100">
 									<textarea name="setAlbum_description" placeholder="Album leírás" data-rule="STRING,0,5000"></textarea>
 								</div>
 								<a href="*" data-action="component/${setup.name}/rename"><div class="btn type-1">Átnevez</div></a>
@@ -3342,7 +3256,7 @@
 				selAlbum = dom.querySelector(setup.selectElem);
 				title = dom.querySelector('input[name="setAlbum_title"]');
 				description = dom.querySelector('textarea[name="setAlbum_description"]');
-				chckbx = dom.querySelector('#albumAdminCheckbox');
+				chckbx = dom.querySelector('#adminSideCheckbox');
 				files = dom.querySelector('input[type="file"]');
 				for (e of albumData) {
 					addAlbumOptions(e);
@@ -3370,7 +3284,7 @@
 			}
 
 			function errorUpload(data){
-				console.log('image upload failed',data);
+				debug(data);
 			}
 
 			function fileUploadHandler(e) {
@@ -3526,9 +3440,9 @@
 		// ------------------------- ImageManager constructor -------------------------
 		// --------------------------------------------------------------------------
 
-		function ImageManager (setup) {
+		function ImageManager (setup, req) {
 			let e, dom, selAlbum, description, thumbContainer, chckbx, files, selectedImage,
-				[currentAlbum, albumData, imageData] = pages.current.componentData[setup.name];
+				[currentAlbum, albumData, imageData] = pages.current.componentData[setup.relationship.viewer];
 			const albumId = pages.current.routeData.param.id || 0,
 			 	templates = {
 					main(setup) { return view.getContent ('adminSidePanelBone', ['imageManagerDiv',`
@@ -3576,7 +3490,7 @@
 				dom = document.getElementById('imageManagerDiv');
 				selAlbum = dom.querySelector(setup.selectElem);
 				description = dom.querySelector('textarea[name="setImage_description"]');
-				chckbx = dom.querySelector('#imageAdminCheckbox');
+				chckbx = dom.querySelector('#adminSideCheckbox');
 				files = dom.querySelector('input[type="file"]');
 				for (e of albumData) {
 					addAlbumOptions(e);
@@ -3589,13 +3503,12 @@
 			function successUpload(data) {
 				const images = data.modelData,
 					id = images.id;
-				console.log(images);
-				imageData.push(images);
+					imageData.push(images);
 				thumbContainer.insertAdjacentHTML('beforeend', view.getContent('albumImageCreate', images));
 			}
 
 			function errorUpload(data){
-				console.log('image upload failed',data);
+				debug(data);
 			}
 
 			function fileUploadHandler(e) {
@@ -3721,7 +3634,6 @@
 					const dom = thumbContainer.querySelector(`#image_${id} a[href="*"]`);
 					if (!dom) { return; }
 					dom.click();
-					console.log(dom);
 				},
 				removeImage(id=null) {
 					removeImage(id);
@@ -3801,7 +3713,6 @@
 			body.addEventListener('mousemove', mousemove);
 			// use window => mouse could be released when pointer isn't over the body
 			window.addEventListener('mouseup', mouseup);
-			console.log('mouse up - draghandler');
 			shiftX = e.clientX - e1.offsetLeft;
 			shiftY = e.clientY - e1.offsetTop;
 		}
@@ -3821,7 +3732,7 @@
 	// ------------------------- SettingsManager constructor -------------------------
 	// --------------------------------------------------------------------------
 
-	function SettingsManager (setup, ajax=false) {
+	function SettingsManager (setup, req=false) {
 		let dom, inputs;
 		const template = `
 		<div class="${setup.name}">
@@ -3832,7 +3743,7 @@
 				<input id="settings_address" name="settings_address" type="text" placeholder="Cím" title="Címe csak magyar karaktereket tartalmazhat" data-empty="true" data-rule="ADDRESS_HUN,0,50">
 				<input id="settings_phone" name="settings_phone" type="text" placeholder="Telefon" title="Kérem adjon a telefon számat" data-empty="true"  data-rule="PHONE,0,50">
 				<input id="settings_email" name="settings_email" type="text" placeholder="Email cím" title="Kérem adjon meg az email címét" data-rule="EMAIL,5,50">
-				<input id="settings_password" name="settings_password" type="password" placeholder="Jelenlegi jelszó" title="Kérem adjon meg a jelenlegi jelszavát" data-empty="true" data-rule="ALPHA_NUM,0,32">
+				<input id="settings_password" name="settings_password" type="password" value="" placeholder="Jelenlegi jelszó" title="Kérem adjon meg a jelenlegi jelszavát" data-empty="true" data-rule="ALPHA_NUM,0,32">
 				<input id="settings_password_new1" name="settings_password_new1" disabled type="password" data-empty="true" placeholder="Új jelszó" title="Kérem adjon meg egy jelszót, az angol ABC betűit és/-vagy számok felhasználasával" data-rule="">
 				<input id="settings_password_new2" name="settings_password_new2" disabled type="password" data-empty="true" placeholder="Jelszó újra" title="Egyeznie kell az előző mezővel!" data-same=""><br>
 				<br>
@@ -3851,7 +3762,7 @@
 			};
 			inputs.passOld.onkeyup = changeOldPassword;
 			inputs.passOld.onchange = changeOldPassword;
-			ajax.get(setup.datasource.get, {}, updateFields, data => console.log(data));
+			req.get(setup.datasource.get, {}, updateFields, debug);
 		}
 
 		function updateFields(data) {
@@ -3892,10 +3803,10 @@
 
 
 	// --------------------------------------------------------------------------
-	// ------------------- messengerComponent constructor -----------------------
+	// ------------------- MessengerComponent constructor -----------------------
 	// --------------------------------------------------------------------------
 
-	function messengerComponent (setup, req=false) {
+	function MessengerComponent (setup, req=false) {
 		let dom, tabs = {}, tab_names = [], e, msgList=[],sentList=[],
 			targetUser, inboxTable, sentTable,inpSubject, inpContent, msgIcons,
 			timerId, timerPeriod = setup.refresh.period * 1000, timerUrl = setup.datasource.refresh;
@@ -3975,6 +3886,7 @@
 		renderFunc = {
 			write(data) {
 				const userList = data.modelData;
+				targetUser.innerHTML = '';
 				for (let user of userList) {
 					targetUser.options[targetUser.options.length] = new Option(user.name, user.id);
 				}
@@ -4050,7 +3962,7 @@
 		}
 
 		function periodicTimer() {
-			req.get(timerUrl, {}, renderFunc['refresh'], data => console.log(data));
+			req.get(timerUrl, {}, renderFunc['refresh'], debug);
 			timerId = setTimeout(periodicTimer, timerPeriod);
 		}
 
@@ -4123,7 +4035,7 @@
 				tabs[name].classList.add('hide');
 			}
 			tabs[slug].classList.remove('hide');
-			req.get(setup.datasource[slug], data, renderFunc[slug], data => console.log(data));
+			req.get(setup.datasource[slug], data, renderFunc[slug], debug);
 		}
 
 		return {
@@ -4151,7 +4063,7 @@
 			},
 			delete(id=null) {
 				if (!id) { return; }
-				ajax.get(setup.datasource.delete, {param:{id}}, deleteMsg, data => console.log(data));
+				ajax.get(setup.datasource.delete, {param:{id}}, deleteMsg, debug);
 			},
 			remove() {
 				dom.remove();
@@ -4261,7 +4173,7 @@
 			let user = getUser(id);
 			if (user) {
 				if (id != Auth.userId && user.rank >= Auth.role) {
-					return notify.add(`Selected user got same or higher rank than you!`,'error');;
+					return notify.add(`Selected user got same or higher rank than you!`,'error');
 				}
 				delLink.classList[Auth.userId == id ? 'add' : 'remove']('disabled');
 				selectedUser = user;
@@ -4303,7 +4215,7 @@
 			},
 			deleteUser() {
 				if (!selectedUser) { return; }
-				ajax.get(setup.datasource.delete, {param:{id: selectedUser.id}}, deleteSuccess, data => console.log(data));
+				ajax.get(setup.datasource.delete, {param:{id: selectedUser.id}}, deleteSuccess, debug);
 			},
 			message(id=null) {
 				alert('msg: '+id);
@@ -4324,21 +4236,214 @@
 	}
 
 	// ---------------------------------------------------------------
+	// ---------------------- ModalComponent -------------------------
+	// ---------------------------------------------------------------
+
+	function ModalComponent(setup, req) {
+		let dom, content, urlSuffix,
+			isOpen = false,
+			options = {
+				layer: true,
+
+			};
+		const	template = {
+				main() {
+					return `<div href="*" data-action="component/${setup.name}/close" class="close"> &times; </div>
+							<div class="content"></div>`;
+				}
+			};
+
+		function init() {
+			dom = document.createElement('div');
+			dom.dataset.modal = true;
+			dom.classList.add('modal-window', 'hidden', 'fade-in');
+			dom.innerHTML = template.main();
+			document.body.appendChild(dom);
+			content = dom.querySelector('.content');
+		}
+
+		init();
+
+		// str = conent string
+		// urlAddon = string what will be added to url
+		// init = page started with this prefix (then true)
+		function setContent(str, urlAddon=false, init=false) {
+			if (str || str === '') {
+				content.innerHTML = str;
+			}
+			if (urlAddon) {
+				if (!init) {
+					router.setUrl(urlAddon);
+				}
+				urlSuffix = urlAddon;
+			}
+			if (!isOpen) {
+				show();
+			}
+		}
+
+		function close() {
+			if (urlSuffix) {
+				router.setUrl("");
+				urlSuffix = null;
+			}
+
+			dom.classList.add('hidden');
+			content.innerHTML = "";
+			isOpen = false;
+		}
+
+		function show() {
+			isOpen = true;
+			dom.classList.remove('hidden');
+		}
+
+		return {
+			close() {
+				close();
+			},
+			show() {
+				show();
+			},
+			toggle() {
+				if (isOpen) {
+					close();
+				} else {
+					show();
+				}
+			},
+			getDOM() {
+				return dom;
+			},
+			setContent(str=false, urlAddon=false, init=false) {
+				setContent(str, urlAddon, init);
+			},
+			getContent() {
+				return content;
+			}
+		}
+	}
+
+	// ---------------------------------------------------------------
+	// ------------------ YoutubeViewerComponent ---------------------
+	// ---------------------------------------------------------------
+
+	function YoutubeViewerComponent(setup, req) {
+		let dataList = pages.current.componentData[setup.name];
+		const component = pages.current.component,
+			modalName = setup.relationship.modal,
+			template = {
+				main(video) {
+					return `<div class="video-container">
+							<iframe src="https://www.youtube.com/embed/${video.id}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+						</div>`;
+				}
+		}
+
+		function init() {
+			const videoIndex = pages.current.routeData.param.index;
+			if (videoIndex) {
+				setTimeout( () => show(videoIndex, true), 500);
+			}
+		}
+
+		init();
+
+		function show(id, init=false) {
+			for(let video of dataList) {
+				if (video.id === id) {
+					return component[modalName].setContent(template.main(video), video.id, init);
+				}
+			}
+		}
+
+		return {
+			show(id=null) {
+				show(id);
+			},
+			remove() {
+
+			}
+		}
+	}
+
+	// ---------------------------------------------------------------
+	// -------------------- ImageViewerComponent ---------------------
+	// ---------------------------------------------------------------
+
+	function ImageViewerComponent(setup, req) {
+		let dataList = pages.current.componentData[setup.name][2],
+			currentIndex = 1, image, title, date;
+		const component = pages.current.component,
+			modalName = setup.relationship.modal,
+			template = {
+				main(image) {
+					let leftArrow = image.index > 1 ? `<div class="leftCarousel"><a href='*' data-action='component/${setup.name}/previous'> &#10096; </a></div>` : ``,
+						rightArrow = image.index < dataList.length ? `<div class="rightCarousel"><a href='*' data-action='component/${setup.name}/next'> &#10097; </a></div>` : ``;
+					return `<div class="image-container">
+								<div class="image-src-side">
+									<img src="${GALLERY_PATH+image.path}">
+									${leftArrow}
+									${rightArrow}
+								</div>
+								<div class="image-data-side">
+									${image.description}<br>
+									<time datetime="${image.created}">${image.created.split('-').join('.')}</time>
+								</div>
+							  </div>`;
+				}
+		}
+
+		function init() {
+			const videoIndex = pages.current.routeData.param.index;
+			if (videoIndex) {
+				setTimeout( () => show(videoIndex, true), 500);
+			}
+		}
+
+		init();
+
+		function show(index,init=false) {
+			const image = dataList[index-1];
+			if (!image) { return; }
+			currentIndex = index;
+			return component[modalName].setContent(template.main(image), image.index, init);
+		}
+
+		function changeImage(direction) {
+			const nIndex = direction === 'next' ? +currentIndex+1 : +currentIndex-1;
+			show(nIndex);
+		}
+
+		return {
+			show(id=null) {
+				show(id);
+			},
+			next() {
+				changeImage("next");
+			},
+			previous() {
+				changeImage("prev");
+			},
+			remove() {
+
+			}
+		}
+	}
+
+	// ---------------------------------------------------------------
 	// ---------------------- Create objects -------------------------
 	// ---------------------------------------------------------------
 
 	let ajax = new Ajax();
 	let middleware = new Middleware();
 	let router = new Router(middleware);
-	let model = new Model(middleware);
-	let view = new View(middleware);
-	let controller = new Controller(middleware, model, view);
+	let model = new Model(router);
+	let view = new View();
+	let controller = new Controller(middleware);
+	// maybe better if i put Notufy into components but longer to access
 	let notify = new Notify();
+
 	router.init();
 
-	//setInterval( () => {
-		//if (Auth.userId > 0) {
-			//ajax.get('model/User.php?action=save_status', {domain: Auth.domain, hash: Auth.hash}, (data=null) => {}, (data=null) => {});
-		//}
-	//},3000);
 })();

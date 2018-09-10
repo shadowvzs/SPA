@@ -5,13 +5,6 @@ spl_autoload_register(function ($class) {
 class Message extends Model {
 
 	public static $TABLE_NAME = 'messages';
-    public static $UPLOAD_FOLDER = "/img/gallery/";
-    public static $THUMB_FOLDER = "/img/gallery/mini/";
-    public static $MAX_HEIGHT = [
-        'normal' => '1200',
-        'thumb' => '240'
-    ];
-    public static $COLOR_DEPTH = 256;
  	public static $INPUT_RULE = [
 		'id' => ['type'=>'INTEGER'],
         'sender_id' => ['type'=>'INTEGER'],

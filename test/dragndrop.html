@@ -1,0 +1,136 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<meta name="description" content="Scrolling">
+	<meta name="keywords" content="HTML,CSS,JavaScript,JSON,Ajax">
+	<meta name="author" content="Varga Zsolt">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>test</title>
+</head>
+<body>
+
+	<div class="dropZone" id="zone1">
+
+	</div>
+
+	
+	<div class="preview" id="preview">
+	
+	</div>
+	
+	<input type="file" onchange="valami(this);">
+	<progress id="progress-bar" max=100 value=0></progress>
+<script>
+function valami(e){
+	console.log(e.files[0]);
+	previewFile(e.files[0])
+}
+
+dropArea = document.getElementById('zone1');
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
+	dropArea.addEventListener(e, preventDefaults, false)
+});
+
+['dragenter', 'dragover'].forEach(e => {
+  dropArea.addEventListener(e, highlight, false)
+});
+
+['dragleave', 'drop'].forEach(e => {
+  dropArea.addEventListener(e, unhighlight, false)
+});
+
+dropArea.addEventListener('drop', handleDrop, false)
+
+
+function highlight(e) {
+  dropArea.classList.add('highlight')
+}
+
+function unhighlight(e) {
+  dropArea.classList.remove('highlight')
+}
+
+function preventDefaults (e) {
+  e.preventDefault()
+  e.stopPropagation()
+}
+
+function handleDrop(e) {
+  let dt = e.dataTransfer, files = dt.files
+  handleFiles(files)
+}
+
+function handleFiles(files) {
+	files = [...files]	
+	initializeProgress(files.length)
+	files.forEach(uploadFile)
+	files.forEach(previewFile)
+}
+
+function uploadFile(file) {
+  let url = 'server.php'
+  let formData = new FormData()
+
+  formData.append('file', file)
+
+  fetch(url, {
+    method: 'POST',
+    body: formData
+  })
+  .then(progressDone)
+  .catch(() => { alert('error'); })
+}
+
+function previewFile(file) {
+  let reader = new FileReader()
+  reader.readAsDataURL(file)
+  reader.onloadend = function() {
+    let img = document.createElement('img')
+    img.src = reader.result
+    document.getElementById('preview').appendChild(img)
+  }
+}
+
+let filesDone = 0
+let filesToDo = 0
+let progressBar = document.getElementById('progress-bar')
+
+function initializeProgress(numfiles) {
+  progressBar.value = 0
+  filesDone = 0
+  filesToDo = numfiles
+}
+
+function progressDone() {
+  filesDone++
+  progressBar.value = filesDone / filesToDo * 100
+}
+
+</script>
+
+<style>
+	.dropZone {
+		position: absolute;
+		top: 100px;
+		left: 100px;
+		height: 200px;
+		width:200px;
+		background-color: rgba(0,0,0,0.5);
+	}
+	
+	.dropZone.highlight {
+		background-color: rgba(0,0,0,0.2);
+		border: 2px solid red;
+	}
+	
+	.preview {
+		position: absolute;
+		top: 100px;
+		right: 100px;
+		height: 200px;
+		width:200px;
+		background-color: rgba(0,0,0,0.5);
+	}	
+</style>
+</body>
+</html>

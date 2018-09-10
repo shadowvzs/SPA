@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>JS SPA - MVC</title>
+		<title> Győzelem Gyülekezet </title>
 		<meta charset="UTF-8">
-		<meta name="description" content="Atm moment only test page for SPA">
-		<meta name="keywords" content="HTML,CSS,JavaScript,JSON,Ajax,SPA,ES6">
+		<meta name="description" content="Ez a Győzelem Gyülekezet honlapja. Kivánjuk, hogy áldásos legyen az itt léted!">
+		<meta name="keywords" content="Győzelem Gyülekezet,Jézus,Biblia,Nagyvárad">
 		<meta name="author" content="Varga Zsolt">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet" href="/css/index.css" type="text/css"/>
+		<link rel="canonical" href="http://gyozelem.ro/home" />
 	</head>
 	<body>
 		<div class="grid" id="App">
@@ -63,7 +64,7 @@
 		<div class="content"></div>
 	</div>
 
-	<div class="cacheTrash"> </div>
+	<div class="cacheTrash"> <h1></h1></div>
 
 	<link rel="stylesheet" href="/css/delayed.css" type="text/css" />
 	<script src="/js/App.js?s=<?php echo time(); ?>" type="text/javascript"></script>
