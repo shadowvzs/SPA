@@ -8,7 +8,7 @@ Note: internet explorer support was dropped, this page for new generation browse
 	- messages: https://www.youtube.com/watch?v=-gvEvySDRqQ
 	
  * demo: https://gyozelem.000webhostapp.com/home - v0.6.0
- * last version: https://github.com/shadowvzs/SPA/tree/v0.6.0
+ * last version: https://github.com/shadowvzs/SPA/tree/v0.7.5
 
 Single page application with javascript root and pages so don't need reload the page.
 Requirement:
