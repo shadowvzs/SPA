@@ -69,291 +69,683 @@ Requirement:
 	* template replace in html where was {{ }}
 </details>
 
-<h2><b>File Structure:</b></h2>
+--------------------------------------
 
- * note * this is outdated, this was the version 0.1
+# File structure:
 
-<b>What will be</b>
-- css folder: index.css
-- js folder: App.js - minified
-- img folder: contain gallery pictures, icons, texture
-- model: similiar like in PHP frameworks individual models extend the base Model.php
-- root: App.php (index.php v0.1.2+) and .htaccess (this is the core, HTML skeleton)
+* css/*.css
+* font/*.ttf
+* img/
+	* gallery
+		* mini/*.jpg|png
+		* *.jpg	
+	* icons - would be removed
+		* menu - would be removed
+		* social - would be removed
+	* static/*.jpg|png
+* js/App.js
+* model/*.php
+* .htaccess
+* index.php
 
-<b>It is dev version because:</b>
-- css folder: still not minified and used 2 css
-- js folder: not minified 
+--------------------------------------
 
-<b>BTW about setup:</b>
-1. everything must be in localhost/test folder
- example: localhost/test/App.php (v0.1.2 localhost/index.php)
-2. apache2 url rewrite must be enabled
-3. database settings for mysql must set in /model/Model.php
+# Client Side
+
+## Main objects:
+*except components & pages, every object will be constructed only once*
+
+* **ajax** - constructor Ajax()
+* **middleware** - constructor Middleware()
+* **router** - constructor Router()
+* **model** - constructor Model(middleware)
+* **view** - constructor View(middleware)
+* **controller** - constructor (middleware, model, view)
+* **notify** - constructor Notify()
 
 
-<h2><b>Working Structure:</b></h2>
-<details> 
-<summary>show description</summary>
-<h3>Notes:</h3><ul>
-<li> App.php contain every page skeleton</li>
-<li> Client render, Model, Router, Controller</li><br>
-<li>Middleware: <ul>
-      <li>What is middleware? nothing more or less than a bridge object between Router and Controller object</li>
-      <li>Middleware object got 3 method: add (register a callback), run (call the callback with data), remove (i think it is clear)
-and we inject in constructor in both Router and Controller</li>
-      <li>Example: we register callback from Controller object and we can call it from  Router object with a key, 
-so similiar like observer/observeable</li>
-      <li>Used for: after url was parsed and validated in Router we execute setPage in controller and also pass data from Router object</li>
-</ul>
-</li>
-  
-<li>Router
-      <ul>
-        <li> Appache .htaccess redirect everything to App.php so the url will be handled by Router object what got a contructor function and later will be created the instance </li>
-        <li> You must define the available routes in Router construction function</li>
-        <li> Router split the current url to: prefix (opt), controller, action, param and compare with defined route paths, if current url structure was found in predefined array then call setPage method in Controller else redirect to error page ( with id 404)</li>
-        <li>Router have a global click event what check if current element/or his parent element have href attribute, if check if the link was one from following link type:
-          <ul>
-            <li>Redirect (internal) then push into history and replace url, call the setPage method</li>
-            <li>Popup then send data to popUpRender method in View object</li>
-            <li>Submit collect input data and send to server (ex. login/registration)</li>
-            <li>else - normal link, jump to another site/server/domain</li>
-          </ul>
-      </ul>
-</li>
-<li>Controller
-      <ul>     
-         <li>Contain init stuffs like creating menu, cacheing dom what will be used later</li>
-         <li>Responsable for internal page  changes with data from Routerr (prefix, comtrollerm action, param) 
-         <ul>
-            <li>terminate page: (reset document structure, remove page related stuff, close popUp window)</li>
-            <li>set page: cache new page, check if page got static data (like error page) and call data and render function from Pages object or it is dynamic data and need to call model, ofc we pass data from router to model
-         </ul>
-         </li>
-      </ul>
- </li>
- <li>Model 
-    <ul>
-      <li>send request to backend with ajax object (also here we setup success, error callbacks too)</li>
-      <li>
-        <ul>
-          <li>ex.: controller => model file, action => model method what we need call, and we pass data too params too (user/edit/1 => User.php with edit method and param = 1)</li>
-        </ul>
-      </li>
-      <li>When (JSON) response arrived then depend on response data (render function what we will use sent by server) we will render with View object also depend from response data ajax may create notification message on top-right corner</li>
-done.</li>
-  </ul>
-</li>View
-      <ul>
-        <li>Main goal is render dom skeleton and populate with data from model with replaceing strings (ex. replace {{id}} with response.data.id so basically check if data key exist in string with delimiters)</li>
-        <li>Render popUp window (ex. used for albums & youtube videos)
-            <ul>
-              <li>in several case when we use with arrays (like images in albums) we cache here for popUp window and we read data from here and not from database each time we change image in window</li> 
-              <li>get string data from Router and split (first part will be the popUp type, second is the dataIndex)</li>
-              <li>depend on poUp type we get template string for populate the popUp window content</li>
-              <li>rewrite url for make popUp window content linkable (example image what we selected)</li>
-              <li>show window and optionally add modal semi transparent background and if we close then hide it</li>
-              <li>we handle here the image preloading example if user check album content and till to him the thumbnail will be listed another async function in background load the large imagesm when user click to thumbnail and open the large image then will be showed faster</li>
-              <li>visibility rendering (if for user the auth will be changed then we change what he can see BUT this is double checked because server not send data for view rendering if user not have the correct rank ) </li>
-              <li>multicall rendering function what render each render pairs (data+template+container) from server to correct render function if server want render more content with a single response
-            </ul>
-         </li>
-      </ul>
-</li>
+## Special Objects
+* **pages** - object literal about page behaviours 
+* **components** - *each component got his own constructor*
 
-  </ul>
-</li>
+--------------------------------------
 
-<li> Data and Auth <ul>
-  <li> Client side communicate with database via ajax requests and used 2 hash for this: auth hash (md5 but not contain any user data) and domain hash (crsf) </li>
-  <li> Server side check if domain hash is correct else send back error, also make verification for auth hash if exist or no and response depend on user role (rank)</li>
-  <li> Server with response send back everytime correct hashes and client side ajax request automatical update auth data if needed, store in private object and localstorage, but not store sensible data like password.</li>
-  <li> Server could send data and also could send one or more renderfunction name what client side automatically call when data arrived in client side, so
-   basically you can choose with what render function(s) what render your data what you send to client (best example is gallery)</li>
-  </ul></li>
- </ul>
- </details>
- 
-<h1>Example</h1>
-<details> 
-<summary>show the examples</summary>
- user use this url:
- <b> http://79.117.23.69/test/gallery/album/2/4</b>
- 
- <ul>
-    <li>Router
-      <ul>
-        <li>router.init() - catch the url and create few variable with splited href into (split only for getting the internal url from whole url so this: <b>gallery/album/2/4</b>)</li>
-        <li>router.inti() -> redirect() -> validateRoute(); - here route will be validated:
-          <ul>
-            <li> success: we found the predefined route ("/gallery/album/:id/:index") so we return to redirect() with splited routeData object what look like this {prefix:null, controller:gallery, action: album, param { id:2, index: 4 } }</li>
-            <li> fail:  we call again the redirect() function but newUrl will be the not found url (error/404) what will be rendered from pages object (because all static data)</li>
-          </ul>
-        </li>
-        <li> we call Controller.setPage method from Router.redirect with middleware object and we send the routeData object
-      </ul>
-    </li>    
-    <li>Controller</li>
-      <ul>
-        <li>setPage call terminatePage if was previous page, then change page title, check if in pages exist render function for this controller+action pair</li>
-            <ul>
-              <li> if exist render method (ex. pages[controller][action].render) then call that and pass param (ex. id) from route data (this is how error redirect work) </li>
-              <li> not exist render in pages then we call model.getPageData method and pass routeData to it
-            </ul>
-        </li>
-      </ul>
-     </li>
-     <li>Model
-      <ul>
-        <li> getPageData create setup object from routeData ( { url: Gallery.php, method: GET, data: {action: album, param: {id:2, index:4} }}) and call sendRequest  </li>
-        <li> sendRequest lock the action for this controller/action pair until we have something success or error handler </li>
-        <li>Backend
-          <ul>
-             <li>Gallery.php reicive the data, Gallery object set table name, validation for potentional data and extends Model object and Model obj constructor call methods for validate data, domain hash, user hashs </li>
-             <li>if everything ok then constructor call the correct method ($this->album($param)) else we send error message what notify object will show the user</li>
-             <li>Gallery->album will check the user role and depend on that we make query with mysqli, declare the data (response from mysql query) for correct renderfunctions (in client side view object) and container (dom query selector string)</li>
-          </ul>
-        <li> if success then return data object and check if was declared renderFunc, if yes then we call it (view[data.renderFunc+'Render'](...data.modelData))
-       </ul>
-      </li>
-      <li>View
-        <ul>
-          <li>in this case the primary renderFunction what was declared in backend is multicallRender in view object so we pass data to multicall from model object, successHandler function</li>
-          <li>multicallRender go over the data array with "for of", split and send every data with his own render function (in this case 5 call)
-            <ul>
-              <li>first three array index will be addressed to templateInsertRender function, what will render: selected album field, album list container populate with album names, image container populate with images
-                <ul>
-                  <li> replace string in template then if all done then insert into container dom </li>
-                </ul>
-              </li>
-              <li>4th will be addressed to popUpRender function
-                <ul>
-                  <li> populate the view.global.popUp object properties, get the template, prepare the data for call templateInsertRender function for replace the popUp window content</li>
-                  <li> manipulate url (if not was selected target for popUp window then add param to url, else replace param) with router.virtualRedirect method (difference vs redirect is virtual redirect only push history and replace url but not make validation ro send data to controller )
-                  <li> show window (with remove hidden class from window) - <b>HERE ENDED IF ALL WAS OK</b> </li>
-                  <li> if popUp window will be closed the last param from url will be removed, window will be hide (add hidden class to window), remove window content
-                </ul>
-              </li>
-              <li>5th preloadImage function
-                <ul>
-                  <li> this go over the images array and create images (1 string insert not multiple append) BUT only if not was cached yet</li>
-                </ul>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </li>
- </ul>
+# Server Side
+* **PHP** - the heart in backend
+	* Model - every other class extends this one
+	* Child Models - which table related classes like User
+* **.htaccess** - for url rewrite / redirection to index.php
+
+--------------------------------------
+--------------------------------------
+
+# ajax
+<details>
+<summary> show/hide </summary>
+	
+* **input param**: 
+	* url - string
+	* method - string
+	* data - object
+	* success - callback function (data)
+	* error - callback function (data)
+
+* **output property**: 
+	* get(url, data, success, error)
+	* post(url, data, success, error)
+	* raw(setup, success, error)
+	* file(url, data, success, null)
+
+* **role**:
+	* automatically send with request and modify the user hash and domain hash
+	* connection between frontend and backend (send/ask data)
+	* handle foward the reicived data to callbacks
+	* if request got status fail then send **notify** message to user
+	* if user rank changed (ex. login/logout) then call visibility render function from view
 </details>
 
-<h1>Weird solutions?</h1>
-<details> 
-<summary>show the solutions </summary>
-<h2>CSS: Responsive text</h2>
-<code>
-```html
- 
- <pre>
- 
-	>    < d i v  c l a s s = "something" 
-	>         data-mobil="...short text..." 
-	>         data-tablet="...medium length text..."	
-	>         data-desktop="...long text..."	
-	>         data-desktop-hd="...longer text...">  
-	>    < / d i v >
+# notify
+<details>
+<summary> show/hide </summary>
 	
-	.something::after { content: attr(data-mobil); }
+* **use**:
+	* message - string
+	* type - string (default: 'error', 'success', 'normal', 'warning')
+
+* **output**: 
+	* add(message, type)
+	* remove(id)
+
+* **responsability**:
+	* send to user an animated flash message at top-right corner
+</details>
+
+# router
+<details>
+<summary> show/hide </summary>
+* **output property**: 
+	* url() - return object (properties: base_path, base_url, url_array, query_string, query_array)
+	* redirect(newUrl, title=null, obj=null) - redirect the page (call setPage from Controller)
+	* setFullUrl(newUrl) - change url without other action
+	* setUrl(urlAddon) - change url based on urlAddon (modelComponent use this option)
+	* init() - delayed redirect()
+
+* **note**:	
+	* Appache .htaccess redirect everything to index.php so the url will be handled by Router object what got a contructor function and later will be created the instance 
+
+* **role**:
+	* manage history part (push state)
+	* manage back button event
+
+
+## Router in action
 	
-	@media only screen and (min-width: 758px) {
-		.something::after { content: attr(data-tablet); }
-	}	
+* You must define the available routes in Router constructor function like:
+```
+		routes = [
+			/*
+				which got * it is optional, not required!
+				url(0): prefix*/model/action*/:param*
+				prefix(1) - optional (use false if you don't use)
+				auth(2)	  - required role level (null/false=public page)
+				prefix(3)  - validation for params (ex: NUMBER/SLUG)
+			*/
+			//            0               1    2    3    
+			['/admin/user/edit/:id/', 'admin', 3, ['NUMBER']],
+			['/gallery/album/:slug/:index', false, null, ['SLUG','NUMBER']],
+		];
+```
+* If current url structure match with anything (**validateRoute**) from routes array then call setPage method in Controller
+	* if pages.model_action exist then build the page with model & view
+		* pages_model_action got information about page name, if required mode data, which component use that page etc
+	* else redirect to error page ( with id 404)
+* Router have a global click event what check if current element/or his parent element have href attribute, if check if the link was one from following link type:
+    * Redirect (internal) then push into history and replace url, call the setPage method
+		* **/home**
+    * Component then send data to popUpRender method in View object
+		* **href="*" data-action="component/youtubeViewer/show/1"**
+    * Toggle - toggle an element by id
+		* **href="*" data-action="toggle/audioPlayer"**
+    * SelectAll - toggle an element
+		* **href="*" data-action="selectAll/"**
+    * Submit collect input data and send to server (ex. login/registration)
+		* **href="*" data-action="submit/login"**
+    * else - normal link, jump to another site/server/domain
+		* **href="https://google.com"**
+</details>
+
+# controller
+<details>
+<summary> show/hide </summary>
+
+* **input property**: 
+	* middleware object
+
+* **role & useage**:
+	* bridge between router and view/model (with middleware)
+	* router through middleware can call & pass routedata to setPage function in controller
+		* this terminate the old page
+		* call model or view for build page depend on **render** in **pages** object
+			* if render.model: true - get data from backend and call view.build()
+				* we call: **model.getPageData(controller, action, param)**
+			* if render.model: string - get api data then it call view.build()
+				* we call: **model.getCustomData(render.model, param)**
+			* if render.model not exist - static pages
+				* we call: **view.build()**
+</details>
+
+# model
+<details>
+<summary> show/hide </summary>
 	
-	@media only screen and (min-width: 1108px) {
-		.something::after { content: attr(data-desktop); }
-	}	
+* **input param**: 
+	* nothing at moment but could be injected view or router
 
-	</pre>
-	```
-</code>
+* **output property**: 
+	* getPageData(controller, action, param) 
+		* those data from url, like /user/edit/2
+	* submitForm(formId, url, extraDataObject, successHandler)
+		* formId - id on form element, which contain the form data fields
+		* url - string
+		* extraDataObject - object[optional] what we want insert into form datas
+		* successHandler - function[optional] we can assign handler function if needed else backend must send which handle needed for processing the returned data
+	* getCustomData(apiKey, param)
+		* apiKey - string key for for Api object inside of model object
+		* param what we send to api
 
-<h2>JS: Submit without link</h2>
+* **role**:
+	* this is the data source with ajax, send/ask data from backend
+	* depend on function what we use, could be:
+		* sending data to api and handle the request with inbuilt api functions
+		* sending form:
+			* gather every input, select, textarea inside of form element
+			* validate data if data got rules and give error if something wrong:
+				* **everything what you validate here, must validate in backend too!!**
+				* attributes what needed for validation:
+					* **id**: must have same prefix than form name
+						* ex. form is loginForm, then email field id is login_email
+					* **name**: same like id, must have same prefix
+						* when we send data then form prefix cutted and param became the remaining string:
+						* ex. **name="login_email"** when u send became **email=" *input value* "**
+					* **title**: well, this is only optional but could be usefull
+						* when validation fail and we have title then we send this message to user and not validator error message
+					* **validators**: used for validate the inputs with predefined rules:
+						* **data-rule="EMAIL,5,50"** - email validator
+							* EMAIL: regex pattern name, see **regex patterns**
+							* 5: minimum length
+							* 50: maximum length
+						* **data-same="signup_password"** - element id - compare this element value with another element value
+				* complete example: 		
+```
+				<input id="login_email" name="login_email" type="text" placeholder="Email cím" title="Kérem adjon meg egy valós email címet" data-rule="EMAIL,5,50">
+```					
+</details>
 
-<code>
-    `
-    document.addEventListener("click", e => {
-  
-         if (href.length > 7 && href.substr(0,7) === 'submit:') {
-          e.preventDefault();
-          form = document.getElementById(href.substr(7)+"_Form");
-          model.sendForm(form);
-       }
-       
-    }
+# view
+<details>
+<summary> show/hide </summary>
+	
+* **input param**: 
+	* nothing at moment but could be injected model or router
 
- 
-     sendForm(form){
-			formMethod = form.dataset.method,
-			formAction = form.dataset.action.split('/'),
-			requestKey = formAction[0]+'_'+formAction[1],
-			param = this.getFormData(form);
+* **output property**: 
+	* getContent(key, data) 
+		* key is string key
+		* data is object
+		* return template string from **tFunc** (template function) object, (where method name is key, param is data)
+	* render(key, data)
+		* key is string
+		* data is object
+		* execute function from **rFunc** object (where method name is key, param is data)
+	* multicall(data)
+		* data is object array and contain which render functions need to be called
+	* build(data)
+		* will call the private **build** function which also accept same param (see internal functions)
+	* visibility()
+		* call the internal **refreshDOMVisibility()** function
+	* terminate()
+		* call the internal **terminate()** function
+		* param what we send to api
 
-			this.sendRequest ({
-				url: this.getModelPath(formAction[0]), 
-				method: formMethod, 
-				data: {
-					action: formAction[1], 
-					param: param,
-				}
-			});
-		},
-    
-    VALIDATOR = {
-      'NUMBER': /^[0-9]+$/,
-      'ALPHA': /^[a-zA-Z]+$/,
-      'ALPHA_NUM': /^[a-zA-Z0-9]+$/,
-      'STR_AND_NUM': /^([0-9]+[a-zA-Z]+|[a-zA-Z]+[0-9]+|[a-zA-Z]+[0-9]+[a-zA-Z]+)$/,
-      'LOW_UP_NUM': /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).*$/,
-      'SLUG': /^[a-zA-Z0-9-_]+$/,
-      'NAME': '',
-      'NAME_HUN': /^([a-zA-Z0-9 ÁÉÍÓÖŐÚÜŰÔÕÛáéíóöőúüűôõû]+)$/,
-      'EMAIL': /^[a-zA-Z0-9._%-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,4}$/,
-      'IP': /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?).){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
-    };
+		
+* **role**:
+	* render the page content with object what we get from backend with model+ajax
+		* also at build phase add/remove page depend/global components
+		* change the page title
+	* render elements which got rank condition (ex. login/logout button)
+	* store shared templates in **tFunc** object
+		* also can serve this templates to components via **getContent** function
+	* create the initial menus
 
-		getFormData(form) {
-			var inputs = form.querySelectorAll('input, select'), value, rule, val_len,
-			name, prefix = form.id.split('_')[0], len = prefix.length+1, param = {};
-			for ( input of inputs) {
-				input.val
-				name = input.getAttribute('name');
-				if  (!name) { continue; }
-				name = name.substr(len);
-				value = input.value;
-				if (input.dataset.rule) {
-					val_len = value.length;
-					rule = input.dataset.rule.split(',');
-					if (!VALIDATOR[rule[0]].test(value) || val_len < rule[1] || val_len > rule[2]) {
-						return input.title ? input.title : `Invalid data at ${name} field (${rule[1]}, ${rule[2]})`;
-					}
-				}
-				if (input.dataset.same) {
-					rule = document.getElementById(input.dataset.same);
-					if (!rule || value !== rule.value) {
-						return input.title ? input.title : name+' not same than '+rule.name+' field';
-					}
-				}
-				param[name] = value;
+
+* **internal function roles**:
+	* rFunc: 
+		* a group of stored the functions which could be called from render function (and declared from backend too)
+		* ex.: multicall, redirect
+	*tFunc: 
+		* most of template function accept atleast 1 object param
+		* here we store template function with return the template string 
+		* we can share that templates and return with **getContent** function
+	* refreshGlobalComponents:
+		* recheck the global components condition if fulfilled or need add/remove
+	* build: 
+		* it use data object param and pages.current.routeData object for create page content
+			* with controller and action from routedata we get which template we need to use from **tFunc**
+			* change page title
+			* in special case like login/registration its add class to body for remove page scrollbar for those full screen pages
+			* we cache the content dom, string bone, data, title in **pages.current**
+		* add page depend components if condition is fulfilled
+			* it will be stored into pages.current.component[componentName]
+			* data (if needed - see **components**) will be stored into pages.current.componentData[componentName]
+	* terminate:
+		* remove page content
+			* in special case like login/registration its remove class from body ( reenable the page scrollbar)
+		* remove page depend components	
+	* refreshDOMVisibility: 
+		* check and change the role depend dom elements
+		* example logout button if it have **.logged_only** class
+```
+			['.guest_only', Auth.role === 0],
+			['.logged_only', Auth.role > 0],
+			['.member_only', Auth.role > 1],
+			['.moderator_only', Auth.role > 2],
+			['.admin_only', Auth.role > 3],
+```
+
+</details>
+
+# middleware
+<details>
+<summary> show/hide </summary>
+* **output property**: 
+	* add (label, callback=null) - assign callback under this object where key is the label
+	* run(label, data) - call assigned callback and pass data into those callbacks
+	* remove(label) - remove assigned callback property from this object
+
+* **role**:
+	* bridge between controller and router (injected to both constructor)
+
+## Middleware in action
+	
+* assign function from controller
+```
+	middleware.add('redirect', setPage);
+```
+* run assigned function 
+```
+	middleware.run("redirect", data );
+```
+</details>
+
+--------------------------------------
+
+# Constants and Regex pattern
+<details>
+<summary> show/hide </summary>
+
+* note: maybe this will be changed by time
+* constants: 
+	* path:
+		* debug: function(data) - write data to console log
+		* BASE_PROTOCOL: http or https
+		* BASE_HOSTNAME: hostname
+		* BASE_ROOT: base root
+		* MODEL_PATH: path for backend model
+		* IMAGE_PATH: image folder path 
+		* GALLERY_PATH: image gallery folder path 
+		* THUMBNAIL_PATH: image gallery thumbnail folder path 
+		* MENU_ICON_PATH: menu icon folder path 
+		* USER_STATUS: array (Inactive,Active,Banned,Deleted)
+		* USER_RANK: array(Guest,Member,Moderator,Admin,Owner)
+		* INTERNAL_ERROR_URL: url for error 500 - internal error page 
+		* NOT_FOUND_URL: url for error 404 - not found page 
+		* NO_ACCESS_URL: url for error 403 - forbidden page
+		* ERROR_MSG{id:message}: error message based on error id 
+		* MOUSE_BUTTON: for make difference for normal left click
+		* SERVER_TIME_ZONE: GMT+x sec, example 7200 = GMT+3
+		* CLIENT_TIME_ZONE: image folder path
+		* ALLOWED_STATUS_DIFFERENCE: limit in sec which used to define user is online or offline
+		* VALIDATOR: regex pattern for **router** and **model** (form validator)
+			* NUMBER, PHONE, ALPHA, ALPHA_NUM, STR_AND_NUM, LOW_UP_NUM, SLUG, NAME, NAME_HUN, ADDRESS_HUN, STRING, EMAIL, IP
+			* example:
+```
+			'STR_AND_NUM': /^([0-9]+[a-zA-Z]+|[a-zA-Z]+[0-9]+|[a-zA-Z]+[0-9]+[a-zA-Z]+)$/
+```		
+</details>
+
+# Pages
+<details>
+<summary> show/hide </summary>
+
+* **input/output param**:
+	* not exist because it object literal
+
+* **role**:
+	* contain the page and core (view related) infos, main categories:
+		* global - common data:
+			* components (permanent components)
+		* current - common data for current page:
+			* routerData (current controller, action, param, data)
+			* dom (content dom cache)
+			* bone (content dom string content)
+			* title
+			* data (maybe will be removed, used for image cache)
+			* component (page related component)
+			* componentData (if component must store data - see **components** )
+		* controller_action (page related data, ex: article_index - see **router** )
+			* title (page title, sevaral page overwrite this, ex. gallery/article)
+			* render (if missing then it is same than model: false)
+				* model 
+					* boolean: if we need data or no, file name is the controller name, method name will be action
+					* string: if data coming from outside, like example youtube playlist coming from youtube api
+			* template (string key which, which template function we use in view for create that page)
+			* component (object - it is setup data for components - see **components** )
+			* example: 
+```
+				user_index: {
+					title: "Felhasználók",
+					render: {
+						model: true,
+					},
+					component: {
+						userManager: {
+							name: 'userManager',
+							condition: {
+								role: 3
+							},
+							table: '.user .index main table',
+							storeData: true,
+							datasource: {
+								edit: MODEL_PATH+'User.php?action=admin_edit',
+								delete: MODEL_PATH+'User.php?action=delete_user',
+							},
+							constructor: UserManagerComponent
+						}
+					},
+					template: 'usersPage',
+				},
+```			
+## Description
+* pages object verified by Controller 
+	* model render missing or false: then will call automatically View.build();
+	* model render is string: then call the model.getCustomData(render.model, param);
+	* model render is true: then call the model.getPageData(controller, action, param);
+		* in this case backend send in response which View render function(s) must used for page
+		* example, this call View.build(data):
+```
+		class Article extends Model {
+			public function index($data=null) {
+				// code code code
+				return $this->sendResponse([$articles, 0], 'build');
 			}
-			return param;
-		},
-  
+		}
+```			
+* pages object used in View object in build method ( see **view** )
+</details>
 
-      <div class="form_window" id="login_Form" data-method="POST" data-action="user/login">
-        <h1>Login</h1><br>
-        <input id="login_email" name="login_email" type="text" placeholder="Email Address" title="..." data-rule="EMAIL,5,50">
-        <input id="login_password" name="login_password" type="password" placeholder="Password" title="..." data-rule="ALPHA_NUM,6,32"><br>
-        <a href="submit:login"><button> Login </button></a>
-      </div>
-`
-</code>
+# Components
+<details>
+<summary> show/hide </summary>
+
+* **input param**:
+	* setup/setting - object literal
+	* ajax - ajax object itself
+
+* **output property**: 
+	* remove() - remove the DOM what component created and remove the event listeners
+	* rest depend on component
+
+* **special**: 
+	* restriction is must be event target or max 3rd parent of event target
+	* component output functions are callable if you put to any element the following:
+	* **href="*" data-action="component/${componentname}/${function name}/${string param but its optional}"**
+
+* **role**:
+	* dynamically handle a special task like managing user table:
+		* ex. delete user from table & database or change data on user
+	
+* **note**:
+	* javascript constructor function what will be initialized with **new** key
+	* components don't have css
+	* each component have HTML part: 
+		* a template constant where the HTML stored in template function
+		* is template is shared then could get HTML string from View object 
+			* ex. view.getContent(key, data);
+
+
+## Used Component 
+* **ModalComponent**[perm] - modal what let manage url & the content
+* **SettingsManager**[perm] - crud for user settings and visual part
+* **AudioPlayer**[perm] - audio player for playing mp3's from database  
+* **MessengerComponent**[perm] - crud for messages, message window, periodic message checks
+* **Calendar**[page] - show/sort/manage data from news and guests table
+* **GuestbookComponent**[page] - handle CRUD at guestbook page  
+* **ContextMenu**[page] - create right click menu and handle it if you send array to this component
+* **FileUploader**[page] - file upload and progress bar  
+* **AlbumManager**[page] - crud for albums and interact with ContextMenu/FileUploader
+* **ImageManager**[page] - crud for images interact with ContextMenu/FileUploader
+* **UserManagerComponent**[page] - users management and user table
+* **YoutubeViewerComponent**[page] - create youtube video iframe for modal and pass new url
+* **ImageViewerComponent**[page] - create image with carousel for modal and pass new url
+
+## Component types (2)
+
+* global (pages.global.component) 
+	* created at page loading
+	* removed only if component have condition and user role changed
+	
+* page depend (pages.global.component) 
+	* created when user click to an internal page link
+	* removed when user change the current page 
+
+## Component setup/settings
+* structure: object literal
+* properties: common or special 
+* common properties: 
+	* name - string (component name, same than )
+	* condition - object (at moment only role level condition exist)
+	* datasource - object (if component need interact with backend, we store here the url's)
+	* storeData - boolean (if it is true then page data will be saved under pages.current.componentData)
+	* relationship - string (another component name, which we will use for something)
+	* constructor - function (component constructor function)
+	* example: 
+```
+	component: {	
+		settingsManager: {
+			name: 'settingsManager',
+			condition: {
+				role: 1
+			},
+			datasource: {
+				get: MODEL_PATH+'User.php?action=get_my_data',
+				edit: MODEL_PATH+'User.php?action=edit',
+			},
+			constructor: SettingsManager
+		}
+	}
+```
+
+## Components in action
+* component will be initialized in View.Build() (except global components)
+* global components are verified everytime if user role changed
+* currently used component objects saved into pages.current.component[componentName]
+* currently used data for components stored into pages.current.componentData[componentName]
+* relationship: component can interact with another component output functions
+	* examples: 
+		* imageViewer set content and define url for modalComponent
+		* imageManager set content for right-click contextMenu
+</details>
+
+--------------------------------------
+--------------------------------------
+
+# Model
+<details>
+<summary> show/hide </summary>
+
+* **Inits**:
+	* Constants
+		* DEBUG
+		* LOG
+	* Rest
+		* session start
+		* json header
+		
+* **Class**
+	* properties - *all static*
+		* $files - used for file upload
+		* $request  
+			* data:
+				* param: used for store the data from GET/POST request and will be validated
+				* action: which we will call
+				* method: POST or GET
+		* $method - which action we will use, same than $request['data']['action']
+		* $auth - auth data 
+			* userId - 0 or user_id
+			* name - Guest or the user full name
+			* role - 0 or user rank
+			* hash - '' or user session hash (hash the key for logged user session data)
+			* domain - random string which changed at every request ($_SESSION['domain']) 
+		* $DATABASE - connection data
+			* HOST
+			* USER
+			* PASSWORD
+			* DATABASE
+		* $PATTERN - regex patterns for validations
+			* EMAIL
+			* NAME_HUN
+			* ADDRESS_HUN
+			* NAME
+			* INTEGER
+			* SLUG
+			* ALPHA_NUM
+			* STR_AND_NUM
+			* LOWER_UPPER_NUM
+			* STRING - it is special and function was used for this
+
+* **Constructor**: 
+	* fill the static properties
+	* call **domainVerification()**
+	* call **setAuthKey()**
+	* call **accessVerification()**
+	* request validation 
+		* if fail will redirect to **refuseData** and send error
+	* check if requested method exist
+		* if no then redirect to **refuseData** and send error
+			
+* methods - *non static or static*	
+	* deleteFile($path) - static
+		* delete file
+	* accessVerification() - non static
+		* check if user have access for the wanted method
+	* requestValidation() - non static
+		* validate $request['data']['param'] content with rules from $INPUT_RULE
+	* setAuthKey() - non static
+		* set $auth array if we can find with hash or set default values for guest
+	* domainVerification() - non static
+		* check if domain found in session
+			* if yes and mismatch with domain from last request:
+				* call setAuthKey()
+				* call refuseData($errorMsg)
+		* generate new domain and save in session
+	* getParam($key1, $key2, $dafaultValue) - non static
+		* if any from 2 key is empty return the defaultValue
+		* else call **validateString ($key1, $key2)**
+		* key1 is param key what data got in $request['data']['param']
+		* key2 is key for $PATTERN regex validation
+	* getData($key1, $dafaultValue) - non static
+		* similiar like the geParam only this return data from $request['data']
+		* allways validated like alpha numeric string (ex. controller name, action name etc)
+	* validateString($key1, $key2) - non static
+		* key1 is param key what data got in $request['data']['param']
+		* key2 is key for $PATTERN regex validation
+		* return boolean ( used preg_match on htmlspcialchars and trimmed data) except for string where special function used
+	* refuseData($errorMessage, $renderFunc) - static
+		* errorMessage - if we want send message from backend to client side
+		* rederFunc - (optional) which render function we want use
+	* sendResponse($modelData, $renderFunc, $notifyMsg) - non static
+		* modelData - data what we want send to client
+		* rederFunc - (optional) which render function we want use
+		* notifyMsg - (optional) if we want send message from backend to client side
+	* getById ($id) - static
+		* search in current table after id and return that row
+	* getBySlug ($slug) - static
+		* search in current table after slug and return that row
+	* getAll() - static
+		* return every row from table
+	* getConn() - static
+		* return mysql connection if exist else return new connect - singleton
+	* countAll($condition) - static
+		* return how much row exist in current table what fulfilled the condition
+			* condition example: *name = "pista"*
+	* getPage($index, $limit, $condition) - static
+		* return rows wich fulfill the condition but with offset and limit (pagination)
+	* inserted_id() - static
+		* return the last inserted id
+	* insert($data, $returnData) - non static
+		* data - assoc array what we want save (keys = columns, values = values)
+		* returnData - boolean, if true then instead boolean (if was saved or no), we return data
+	* update($data, $returnData) - non static
+		* data - assoc array what we want update (keys = columns, values = values)
+		* returnData - boolean, if true then instead boolean (if was updated or no), we return data
+	* deleteById($id) - static
+		* delete a row from current table
+	* deleteRecords($conditions) - static
+		* conditions - condition string
+			* *ex. "status = 0"*
+	* readRecords($conditons, $returnData, $array, $pageIndex, $perPage, $orderBy, $orderDesc) - static
+		* conditions - string, same than above
+		* returnData - boolean, if we want data (else we will get boolean)
+		* array - boolean, we get more row or first one
+			* if true and exist more matched row we get array with numeric index
+			* if false and exist atleast 1 record then we get the first one
+		* pageIndex - integer, used for pagination, pageIndex * perPage will be the offset
+		* perPage - integer, how much record we want read out (default is ~unlimited)
+		* orderBy - string, fieldname
+		* orderDesc - string, "ASC" or "DESC"
+	* getInsertedId() - non static	
+		* return the last inserted id
+	* slugify($string) - static
+		* return the converted string slug
+	* execQuery($query)	- static
+		* this execute every query and return boolean for non select queries
+			
+
+* **role**:
+	* validate domain/auth session
+	* validate permission for requested method
+	* validate the sent *params*
+	* wrap the most used MySQL queries (save, update, count, delete, readId etc)
+	* execute MySQL queries
+	
+</details>
+
+# Sub Model
+<details>
+<summary> show/hide </summary>
+
+* **Class**
+	* properties - *all static*
+		* $TABLE_NAME - table name
+		* $INPUT_RULE - field validation rule
+			* example: 'content' => ['type'=>'STRING', 'length' => [0, 65535]],
+		* $ROLE_REQ - role requiment for access method
+			* example: 'add' => 3,
+		* $AUTO_FILL - if field value not exist then add default value
+			* example: add' => ['status' => 1]
+		* $ACTION_RULE - overwrite general input rules for a specific method
+			* exemple: 'add' => ['password2' => ['match' => 'password']]
+	
+
+* methods - *non static*	
+	* CRUD functions - non static
+		* general functions: add, delete, edit etc
+		* refuseData or sendResponse return data in json form
+
+* **role**:
+	* declare table name, extends Model
+	* declare validation rules for each field
+	* declare role requiment for methods
+	* CRUD functions
+	
 </details>
