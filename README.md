@@ -765,6 +765,7 @@ Requirement:
 * if browser support GRID (https://css-tricks.com/snippets/css/complete-guide-grid/) then it will use GRID for layout
 ```
 	@supports (display: grid) {
+	
 		@media only screen and (min-width: 1172px) {
 			.grid {
 				grid-template-columns: 245px 1fr auto;
@@ -774,6 +775,18 @@ Requirement:
 					"menu content content"
 					"footer footer footer";
 			}	
+		}
+		
+		@media only screen and (min-width: 1439px) {
+			.grid {
+				grid-template-columns: 300px 1fr 300px;
+				grid-template-rows: auto 75px 1fr auto;
+				grid-template-areas:
+					"header header header"
+					"menu menu menu"
+					"content content content"
+					"footer footer footer";
+			}		
 		}
 	}
 ```
