@@ -7,10 +7,11 @@ Note: internet explorer support was dropped, this page for new generation browse
 	- paralel file upload with components: https://www.youtube.com/watch?v=fczq-wxB0kA
 	- messages: https://www.youtube.com/watch?v=-gvEvySDRqQ
 	
- * demo: https://gyozelem.000webhostapp.com/home - v0.6.0
- * last version: https://github.com/shadowvzs/SPA/tree/v0.7.5
+ * demo: https://gyozelem.000webhostapp.com/home - v0.7.5
+ * last version: https://github.com/shadowvzs/SPA/tree/v0.8.5
 
-Single page application with javascript root and pages so don't need reload the page.
+Single page application with javascript router, so don't need reload the page.
+
 Requirement:
   - apache2 (url rewrite too)
   - php 7
@@ -753,5 +754,175 @@ Requirement:
 	* declare validation rules for each field
 	* declare role requiment for methods
 	* CRUD functions
+</details>
+
+
+# Layout and other CSS stuffs
+<details>
+<summary> show/hide </summary>
+- page is mobile first
+- if browser support GRID (https://css-tricks.com/snippets/css/complete-guide-grid/) then it will use GRID for layout
+```
+	@supports (display: grid) {
+		@media only screen and (min-width: 1172px) {
+			.grid {
+				grid-template-columns: 245px 1fr auto;
+				grid-template-rows: auto 1fr auto;
+				grid-template-areas:
+					"header header header"
+					"menu content content"
+					"footer footer footer";
+			}	
+		}
+	}
+```
+- base64 images in css
+```
+	.icon-48 {
+	    height: 48px;
+	    background-size: 48px 48px;
+	    display: inline-block;
+	    width: 48px;
+	}
+
+	.worship-icon {
+		background: url('data:image/png;base64,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') no-repeat;
+	}
+```
+- nasty selectors, like: 
+```
+	.burger .unreaded-msg.badge:not([data-count="0"]):hover:after
+	.ev-cal .head a:not(.close):hover
+	.header-line .burger input:checked ~ span.burger-line:nth-child(3) 
+
+```
+- contour & title text shadow, box shadow
+```
+	text-shadow:  0 1px 0 #ccc,
+				0 2px 0 #c9c9c9,
+				0 3px 0 #aaa,
+				0 4px 0 #999,
+				0 5px 0 #888,
+				0 6px 1px rgba(0,0,0,.1),
+				0 0 5px rgba(0,0,0,.1),
+				0 1px 3px rgba(0,0,0,.3),
+				0 3px 5px rgba(0,0,0,.2),
+				0 5px 10px rgba(0,0,0,.25),
+				0 10px 10px rgba(0,0,0,.2),
+				0 20px 20px rgba(0,0,0,.15);
+				
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;
+	box-shadow:
+		0 2px 8px rgba(0,0,0,0.5), /* Exterior Shadow */
+		inset 0 1px rgba(255,255,255,0.3), /* Top light Line */
+		inset 0 10px rgba(255,255,255,0.2), /* Top Light Shadow */
+		inset 0 10px 20px rgba(255,255,255,0.25), /* Sides Light Shadow */
+		inset 0 -15px 30px rgba(0,0,0,0.3); /* Dark Background */
+		margin: 1px 1px;
+```
+- image and text based on resolution
+```
+	@media only screen and (min-width: 445px) {
+		.grid header picture {	background-image: url('../img/static/cover_757px.jpg');	}
+		.grid header picture .igevers::after {content: attr(data-tablet); }
+	}
+	@media only screen and (min-width: 758px) {
+		.grid header picture {	background-image: url('../img/static/cover_1024px.jpg');	}
+		.grid header picture .igevers::after {content: attr(data-desktop); }
+	}
+	@media only screen and (min-width: 1025px) {
+		.grid header picture {	background-image: url('../img/static/cover_1440px.jpg');	}
+		.grid header picture .igevers::after {content: attr(data-desktop-hd); }
+	}
+```
+- page design can be changed from css (just use controller & action class), example for http://domain/article/view/1
+```
+	.article .view {
+		/* bla bla */
+	}
+```
+- custom <input type="range"> design for audio player vertical scrollbar and for time tracker bar
+```
+	#audioPlayer .container input[type=range].scrollBar:focus::-ms-fill-lower { }
+	#audioPlayer .container input[type=range].scrollBar:focus::-ms-fill-upper { }
+	#audioPlayer .container input[type=range].scrollBar::-webkit-slider-runnable-track { }
+	#audioPlayer .container input[type=range].scrollBar::-webkit-slider-thumb { }
+	#audioPlayer .container input[type=range].scrollBar:focus::-webkit-slider-runnable-track { }
+	#audioPlayer .container input[type=range].scrollBar::-moz-range-track { }
+	#audioPlayer .container input[type=range].scrollBar::-moz-range-thumb { }
+	#audioPlayer .container input[type=range].scrollBar::-ms-track { }
+	#audioPlayer .container input[type=range].scrollBar::-ms-thumb { }
+```
+- button with css borders
+```
+	#audioPlayer .details .button .play {
+	    border-style: solid;
+		border-width: 4px 0px 4px 8px;
+		box-sizing: border-box;
+		border-color: transparent transparent transparent #fff;
+	}
+```
+- custom <hr /> with div + gradient + rgba 
+```
+	div.separator {
+		height: 1px;
+		width: 100%;
+		margin: 1em 0;
+		background-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(100,100,100,0.5) 51%, rgba(0,0,0,0) 100%);
+	}
+```
+- progressbar with background color
+```
+	background-image:
+    	-webkit-linear-gradient( 135deg,
+         	transparent,
+            transparent 33%,
+            rgba(0,0,0,.1) 33%,
+            rgba(0,0,0,.1) 66%,
+             transparent 66%),
+	    -webkit-linear-gradient( top,
+            rgba(255, 255, 255, .25),
+            rgba(0,0,0,.2)),
+		-webkit-linear-gradient( left, #09c, #f44);
+```
+- animated toggle with pure css (label+checkbox)
+```
+	.article .index #article_toggle:checked + label[for="article_toggle"] {
+	    max-height: 500px;
+	}
+```
+- simple css spiner, fade, slide effects
+```
+	.spinner {
+	    border: 6px solid rgba(255,255,255,0.5);
+	    border-radius: 50%;
+	    border-top: 6px solid rgba(0,0,255,0.5);
+	    width: 50px;
+	    height: 50px;
+	    animation: spin 2s linear infinite;
+	}
 	
+	@keyframes spin {
+	    0% { transform: rotate(0deg); }
+	    100% { transform: rotate(360deg); }
+	}	
+```
+- rarly used css tricks
+```
+	/* make element unclickable */
+	pointer-events: none;
+	/* make element content unselectable */
+	user-select: none;
+	/* set element content after data attribute, exemple data-count */
+	content: attr(data-count);
+	/* make textarea non resizeable */
+	resize: none;
+	/* multiple not? */
+	.fadeOut:not(.login):not(.registration)
+	
+```
 </details>
