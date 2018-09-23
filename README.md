@@ -1,6 +1,9 @@
 # SPA
 Single Page App (pure: JS - ES6, CSS3, PHP7 serverside, HTML5)
-Note: internet explorer support was dropped, this page for new generation browsers like: Chrome, Firefox, Opera etc
+Note: 
+* internet explorer support was dropped, this page for new generation browsers like: Chrome, Firefox, Opera etc
+* README.md not exist in tags/releases, only master branch got this file!
+* database structure was uploaded with v0.8.5 (https://github.com/shadowvzs/SPA/blob/v0.8.5/db/db.sql)
 
  * youtube: 
  	- basics: https://www.youtube.com/watch?v=rrejcoh2z2c
