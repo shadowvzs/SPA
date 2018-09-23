@@ -4,7 +4,7 @@ Note: internet explorer support was dropped, this page for new generation browse
 
  * youtube: 
  	- basics: https://www.youtube.com/watch?v=rrejcoh2z2c
-	- images: https://www.youtube.com/watch?v=wWYikMhwFas
+	- paralel file upload with components: https://www.youtube.com/watch?v=fczq-wxB0kA
 	- messages: https://www.youtube.com/watch?v=-gvEvySDRqQ
 	
  * demo: https://gyozelem.000webhostapp.com/home - v0.6.0
@@ -22,11 +22,17 @@ Requirement:
 <summary>show the list</summary>
 * Note: Pages vs component, page loaded in middle content, component will loaded a div, could be hide/show/toggle etc, could be permanent, page or/and role level depend.
 
+* v0.8.5 logger
+	* Log table created and it save the failed select query and every insert/delete/update with single query
+	* changed few unicode text icon to css icons (ex. audio player main 3 button)
+	* more optimazation in Model.php 
+	* if a guest make comment in guestbook then moderator/admin must approve that comment
+	* increased the required role level for calendar
 * v0.8.0 improvements
 	* calendar eventlisteners halved (changed to attribute link - see the description about router)
-	* audio player loading was fixed and reduced the evenetlisteners
+	* audio player loading was fixed and reduced the eventlisteners
 	* browser back button event was fixed
-	* popUp remade into components: modal, imageviewer, youtubeviewer component (last 2 manipulate the 1st one)
+	* popUp splited into components: modal, imageviewer, youtubeviewer component (last 2 manipulate the 1st one)
 	* fixed sevaral z-index issue
 	* removed image cacheing option
 * v0.6.0 bigger update:
