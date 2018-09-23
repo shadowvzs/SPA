@@ -760,6 +760,7 @@ Requirement:
 # Layout and other CSS stuffs
 <details>
 <summary> show/hide </summary>
+
 * page is mobile first
 * if browser support GRID (https://css-tricks.com/snippets/css/complete-guide-grid/) then it will use GRID for layout
 ```
