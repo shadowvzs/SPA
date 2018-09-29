@@ -33,6 +33,7 @@ Requirement:
 	* domain key need only if request method was post and not get
 	* user page now allowed for any logged user, only it show less data about users for normal users
 	* fixed problem with target user selection when someone click to mail icon in userlist
+	* added more audio (.mp3)
 * v0.8.5 logger
 	* Log table created and it save the failed select query and every insert/delete/update with single query
 	* changed few unicode text icon to css icons (ex. audio player main 3 button)
