@@ -45,6 +45,10 @@ class Model {
 		if ($isPost) {
 			$this->domainVerification();
 		}
+		if (empty($_SESSION['counter'])) {
+			$_SESSION['counter'] = true;
+			static::viewCounter();
+		}
 		$this->setAuthKey();
 		$this->accessVerification();
 
@@ -137,31 +141,41 @@ class Model {
 
 	public function setAuthKey(){
 		$hash = $this->getData('hash', '');
-		static::$auth = (isset($_SESSION[$hash]))
-			? [
+		if (isset($_SESSION[$hash])) {
+			static::$auth = [
 				'hash' => $hash,
 				'role' => $_SESSION[$hash]['rank'],
 				'name' => $_SESSION[$hash]['name'],
 				'userId' => $_SESSION[$hash]['id'],
-				'domain' => &static::$domain,
-			]
-			: [
+			];
+		} else {
+			static::$auth = [
 				'hash' => '',
 				'role' => 0,
 				'name' => 'Guest',
 				'userId' => 0,
-				'domain' => &static::$domain,
 			];
+		}
+		static::$auth['domain'] = &static::$domain;
+	}
+
+	protected static function viewCounter() {
+		$file = '../counter.txt';
+		$fdata = file_get_contents ( $file ) ?? 0;
+		$fdata = intval($fdata) + 1;
+		file_put_contents($file, $fdata);
+	}
+
+	protected static function setDomainKey() {
+		static::$domain = $_SESSION['domain'] = md5(uniqid().time()).md5($_SERVER['REMOTE_ADDR'].'_'.uniqid());
 	}
 
 	public function domainVerification() {
-		if (isset($_SESSION['domain'])) {
-			if (static::$domain !== $_SESSION['domain']) {
-				$this->setAuthKey();
-				$this->refuseData("invalid domain token");
-			}
+		if (!empty($_SESSION['domain']) && static::$domain !== $_SESSION['domain']) {
+			$this->setAuthKey();
+			$this->refuseData("Helytelen kulcs!");
 		} else {
-			static::$domain = $_SESSION['domain'] = md5(uniqid().time()).md5($_SERVER['REMOTE_ADDR'].'_'.uniqid());
+			static::setDomainKey();
 		}
 	}
 

@@ -561,7 +561,6 @@
 #audioPlayer .details .button .play {
     border-style: solid;
 	border-width: 4px 0px 4px 8px;
-	border-color: red blue green yellow;
 	box-sizing: border-box;
 	border-color: transparent transparent transparent #fff;
 }
