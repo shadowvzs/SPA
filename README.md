@@ -3,7 +3,7 @@ Single Page App (pure: JS - ES6, CSS3, PHP7 serverside, HTML5)
 Note: 
 * internet explorer support was dropped, this page for new generation browsers like: Chrome, Firefox, Opera etc
 * README.md not exist in tags/releases, only master branch got this file!
-* database structure was uploaded with v0.8.5 (https://github.com/shadowvzs/SPA/blob/v0.8.5/db/db.sql)
+* database structure was uploaded with v0.9.0 (https://github.com/shadowvzs/SPA/blob/v0.9.0/db/db.sql)
 
  * youtube: 
  	- basics: https://www.youtube.com/watch?v=rrejcoh2z2c
@@ -11,7 +11,7 @@ Note:
 	- messages: https://www.youtube.com/watch?v=-gvEvySDRqQ
 	
  * demo: https://gyozelem.000webhostapp.com/home - v0.7.5
- * last version: https://github.com/shadowvzs/SPA/tree/v0.8.5
+ * last version: https://github.com/shadowvzs/SPA/tree/v0.9.0
 
 Single page application with javascript router, so don't need reload the page.
 
@@ -26,6 +26,13 @@ Requirement:
 <summary>show the list</summary>
 * Note: Pages vs component, page loaded in middle content, component will loaded a div, could be hide/show/toggle etc, could be permanent, page or/and role level depend.
 
+* v0.9.0 fixes
+	* fixed modal close button on right-top corner (also increased its size 40px -> 60px)
+	* added click event to modal if user click outside then it will close the model
+	* fixed problem if user wanted change his password
+	* domain key need only if request method was post and not get
+	* user page now allowed for any logged user, only it show less data about users for normal users
+	* fixed problem with target user selection when someone click to mail icon in userlist
 * v0.8.5 logger
 	* Log table created and it save the failed select query and every insert/delete/update with single query
 	* changed few unicode text icon to css icons (ex. audio player main 3 button)
