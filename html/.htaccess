@@ -3,6 +3,6 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     Options -Indexes
-    RewriteRule !\.(?:jpe?g|gif|bmp|png|tiff|css|js)$ index.php [L,NC,QSA]
+    RewriteRule !\.(?:jpe?g|gif|mp3|bmp|png|tiff|css|js)$ index.php [L,NC,QSA]
     #RewriteRule ^(.*)$ index.php?path=$1 [NC,L,QSA]
 </IfModule>

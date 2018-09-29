@@ -211,7 +211,7 @@
 			['/user/login', false, null, false],
 			['/user/logout', false, null, false],
 			['/user/registration', false, null, false],
-			['/user', false, 2, false],
+			['/user', false, 1, false],
 			['/error/:id', false, null, ['NUMBER']],
 		];
 
@@ -1347,23 +1347,42 @@
 					<td data-field="name">${u.name}</td>
 					<td data-field="rank" class="hide-phone">${USER_RANK[u.rank] || 'Unknown'}</td>
 					<td data-field="status">${USER_STATUS[u.status] || 'Unknown'}</td>
-					<td data-field="phone" class="hide-phone">${u.updated || u.created}</td>
+					<td data-field="lasttime" class="hide-phone">${u.updated || u.created}</td>
+					<td data-field="tools">${msgLink}</td>
+					</tr>`;
+			},
+			userCreateShortRow(u=false) {
+				if (!u) { return ""; }
+				const msgLink = Auth.userId != u.id ? `<a href="*" data-action="component/messageCenter/userTarget/${u.id}"><div class="mini-icon pm-icon focusable-icon"></div></a>` : '';
+				return `<tr data-id="${u.id}">
+					<td data-field="name">${u.name}</td>
+					<td data-field="lasttime" class="hide-phone">${u.updated || u.created}</td>
 					<td data-field="tools">${msgLink}</td>
 					</tr>`;
 			},
 			usersPage(data) {
+				console.log(data);
+				let header,	body = "";
+				if (Auth.role > 2) {
+					header = `<th>Name</th>
+					<th class="hide-phone">Rank</th>
+					<th>Status</th>
+					<th class="hide-phone"> Last login </th>
+					<th></th>`;
+				} else {
+					header = `<th>Name</th>
+					<th class="hide-phone"> Last login </th>
+					<th>Message</th>`;
+					body=`<tr>${data.map(user => tFunc.userCreateShortRow(user)).join('</tr><tr>') }</tr>`
+				}
 				return `<main>
 					<table>
 						<thead>
-							<tr>
-								<th>Name</th>
-								<th class="hide-phone">Rank</th>
-								<th>Status</th>
-								<th class="hide-phone"> Last login</th>
-								<th></th>
-							</tr>
+							<tr>${header}</tr>
 						</thead>
-						<tbody></tbody>
+						<tbody>
+							${body}
+						</tbody>
 					</table>
 				</main>`;
 			},
@@ -3367,7 +3386,6 @@
 			}
 
 			function addSuccess (data){
-				console.log('asd---------', data);
 				if (data.modelData && data.renderFunc && renderFunc[data.renderFunc]) {
 					renderFunc[data.renderFunc](data.modelData);
 				}
@@ -3818,7 +3836,7 @@
 	// --------------------------------------------------------------------------
 
 	function MessengerComponent (setup, req=false) {
-		let dom, tabs = {}, tab_names = [], e, msgList=[],sentList=[],
+		let dom, tabs = {}, tab_names = [], e, msgList=[],sentList=[], lastPage,
 			targetUser, inboxTable, sentTable,inpSubject, inpContent, msgIcons,
 			timerId, timerPeriod = setup.refresh.period * 1000, timerUrl = setup.datasource.refresh;
 
@@ -4024,7 +4042,9 @@
 			if (!len) { return false; }
 			let i = 0;
 			for (;i<len;i++) {
-				if (targetUser[i].value == id) { return targetUser.selectedIndex = i; }
+				if (targetUser[i].value == id) {
+					return targetUser.selectedIndex = i;
+				}
 			}
 			return false;
 		}
@@ -4041,6 +4061,8 @@
 		init();
 
 		function switchPage(slug, id=null) {
+			if (lastPage == slug) { return; }
+			lastPage = slug;
 			const data = id ? { param: { id }} : {};
 			for (let name of tab_names) {
 				tabs[name].classList.add('hide');
@@ -4257,10 +4279,12 @@
 				layer: true,
 
 			};
-		const	template = {
+		const template = {
+				close() {
+					return `<div href="*" data-action="component/${setup.name}/close" class="close"> &times; </div>`
+				},
 				main() {
-					return `<div href="*" data-action="component/${setup.name}/close" class="close"> &times; </div>
-							<div class="content"></div>`;
+					return `<div class="content"></div>`;
 				}
 			};
 
@@ -4269,6 +4293,7 @@
 			dom.dataset.modal = true;
 			dom.classList.add('modal-window', 'hidden', 'fade-in');
 			dom.innerHTML = template.main();
+			dom.onclick = close;
 			document.body.appendChild(dom);
 			content = dom.querySelector('.content');
 		}
@@ -4278,14 +4303,14 @@
 		// str = conent string
 		// urlAddon = string what will be added to url
 		// init = page started with this prefix (then true)
-		function setContent(str, urlAddon=false, init=false) {
+		function setContent(str, urlAddon=false) {
+
 			if (str || str === '') {
-				content.innerHTML = str;
+				const close = template.close();
+				content.innerHTML = str+close;
 			}
 			if (urlAddon) {
-				if (!init) {
-					router.setUrl(urlAddon);
-				}
+				router.setUrl(urlAddon);
 				urlSuffix = urlAddon;
 			}
 			if (!isOpen) {
@@ -4353,17 +4378,19 @@
 
 		function init() {
 			const videoIndex = pages.current.routeData.param.index;
+			delete pages.current.routeData.param.index;
 			if (videoIndex) {
-				setTimeout( () => show(videoIndex, true), 500);
+				setTimeout( () => show(videoIndex), 500);
 			}
 		}
 
 		init();
 
-		function show(id, init=false) {
+		function show(id) {
+			init = false;
 			for(let video of dataList) {
 				if (video.id === id) {
-					return component[modalName].setContent(template.main(video), video.id, init);
+					return component[modalName].setContent(template.main(video), video.id);
 				}
 			}
 		}
@@ -4406,19 +4433,20 @@
 		}
 
 		function init() {
-			const videoIndex = pages.current.routeData.param.index;
-			if (videoIndex) {
-				setTimeout( () => show(videoIndex, true), 500);
+			const currentIndex = pages.current.routeData.param.index;
+			if (currentIndex) {
+				delete pages.current.routeData.param.index;
+				setTimeout( () => show(currentIndex), 500);
 			}
 		}
 
 		init();
 
-		function show(index,init=false) {
+		function show(index) {
 			const image = dataList[index-1];
 			if (!image) { return; }
 			currentIndex = index;
-			return component[modalName].setContent(template.main(image), image.index, init);
+			return component[modalName].setContent(template.main(image), image.index);
 		}
 
 		function changeImage(direction) {

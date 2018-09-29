@@ -54,8 +54,97 @@ class User extends Model {
 		]
  	];
 
+	protected function add($user_data=null){
+		$login_data = [
+			'email' => $user_data['email'],
+			'password' => $user_data['password'],
+		];
+        $user_data['ip'] = $_SERVER['SERVER_ADDR'];
+		$user_data['password'] = $this->createPassword($user_data['password']);
+        unset($user_data['password2']);
+		if($this->save($user_data)) {
+			$this->login($login_data);
+		} else {
+			return static::refuseData('Regisztráció sikertelen!');
+		}
+	}
 
-	protected function login($user_data){
+    protected function index($index=0) {
+        $perPage = 2000;        // at moment not have any point to make it with pagination
+        $cond = static::$auth['role'] > 2;
+        $users = static::getPage($index, $amount, 1);
+        $addon = ['page' => $index];  //additional data if once i make pagination
+        return $this->sendResponse([$users, $addon], 'build');
+    }
+
+    protected function view($id=0) {
+        $role = static::$auth['role'];
+        $cond = $role > 100 ? 1 : 'status = 1';
+        if ($result = static::readRecords(sprintf('`id` = %u AND %s', $id, $cond), true)) {
+            return $this->sendResponse([$result, $role], 'build');
+        } else {
+            return static::refuseData('Felhasználó nem található!', 'redirect');
+        }
+    }
+
+    protected function save_status() {
+        $id = static::$auth['userId'];
+        if ($id > 0) {
+            static::$LOG = false;
+            $sql = sprintf("SELECT count(id) as count FROM `messages` WHERE visibility IN (0,1) AND target_id = %u AND status = 0", $id);
+            $msgCounter = static::execQuery($sql)[0];
+            $this->save([ 'id' => $id, 'last_action' => time()]);
+            return $this->sendResponse($msgCounter, null);
+        }
+    }
+
+    protected function get_my_data() {
+        if (static::$auth['role'] === 0) {
+            return static::refuseData('Your user data not exist!');
+        }
+
+        $user = static::getById(static::$auth['userId']);
+        if (empty($user)) { return static::refuseData('Invalid user id or deleted user!'); }
+        unset($user['password']);
+        unset($user['id']);
+        unset($user['rank']);
+        return $this->sendResponse($user, 'get');
+    }
+
+    protected function edit($data) {
+        extract($data, EXTR_PREFIX_SAME, "wddx");
+        static::$HIDDEN = [];
+        $user = static::getById(static::$auth['userId']);
+        if (empty($user)) { return static::refuseData('Your user data not exist!'); }
+
+        $newData = [
+            'id' => static::$auth['userId'],
+            'name' => $name,
+            'city' => $city,
+            'phone' => $phone,
+            'email' => $email,
+            'address' => $address
+        ];
+
+        if (!empty($password)) {
+    		if ($this->createPassword($password) !== $user['password']) {
+    			return static::refuseData('Wrong current password!');
+    		}
+            if (empty($password_new1)) {
+                return static::refuseData('Invalid new password!');
+            }
+            $newData['password'] = $this->createPassword($password_new1);
+        }
+
+        if ($this->save($newData)) {
+            $user = &$_SESSION[$_SESSION['token']];
+            $user = array_merge($user, $newData);
+            return $this->sendResponse($newData, 'update');
+        }
+        return static::refuseData('Something went wrong, we cannot save your data!');
+    }
+
+    protected function login($user_data){
 		extract($user_data, EXTR_PREFIX_SAME, "wddx");
 		$result = static::readRecords(sprintf("email='%s' AND password='%s'", $email, $this->createPassword($password)), true, false);
 		if (!$result){
@@ -98,95 +187,6 @@ class User extends Model {
 
     protected function createPassword($pw) {
         return md5($pw);
-    }
-
-	protected function add($user_data=null){
-		$login_data = [
-			'email' => $user_data['email'],
-			'password' => $user_data['password'],
-		];
-        $user_data['ip'] = $_SERVER['SERVER_ADDR'];
-		$user_data['password'] = $this->createPassword($user_data['password']);
-        unset($user_data['password2']);
-		if($this->save($user_data)) {
-			$this->login($login_data);
-		} else {
-			return static::refuseData('Regisztráció sikertelen!');
-		}
-	}
-
-    protected function index($index=0) {
-        $perPage = 2000;        // at moment not have any point to make it with pagination
-        $cond = static::$auth['role'] > 2;
-        $users = static::getPage($index, $amount, $cond);
-        $addon = ['page' => $index];  //additional data if once i make pagination
-        return $this->sendResponse([$users, $addon], 'build');
-    }
-
-    protected function view($id=0) {
-        $role = static::$auth['role'];
-        $cond = $role > 100 ? 1 : 'status = 1';
-        if ($result = static::readRecords(sprintf('`id` = %u AND %s', $id, $cond), true)) {
-            return $this->sendResponse([$result, $role], 'build');
-        } else {
-            return static::refuseData('Felhasználó nem található!', 'redirect');
-        }
-    }
-
-    protected function save_status() {
-        $id = static::$auth['userId'];
-        if ($id > 0) {
-            static::$LOG = false;
-            $sql = sprintf("SELECT count(id) as count FROM `messages` WHERE visibility IN (0,1) AND target_id = %u AND status = 0", $id);
-            $msgCounter = static::execQuery($sql)[0];
-            $this->save([ 'id' => $id, 'last_action' => time()]);
-            return $this->sendResponse($msgCounter, null);
-        }
-    }
-
-    protected function get_my_data() {
-        if (static::$auth['role'] === 0) {
-            return static::refuseData('Your user data not exist!');
-        }
-
-        $user = static::getById(static::$auth['userId']);
-        if (empty($user)) { return static::refuseData('Invalid user id or deleted user!'); }
-        unset($user['password']);
-        unset($user['id']);
-        unset($user['rank']);
-        return $this->sendResponse($user, 'get');
-    }
-
-    protected function edit($data) {
-        extract($data, EXTR_PREFIX_SAME, "wddx");
-        $user = static::getById(static::$auth['userId']);
-        if (empty($user)) { return static::refuseData('Your user data not exist!'); }
-
-        $newData = [
-            'id' => static::$auth['userId'],
-            'name' => $name,
-            'city' => $city,
-            'phone' => $phone,
-            'email' => $email,
-            'address' => $address
-        ];
-
-        if (!empty($password)) {
-    		if ($this->createPassword($password) != $user['password']) {
-    			return static::refuseData('Wrong current password!');
-    		}
-            if (empty($password_new1)) {
-                return static::refuseData('Invalid new password!');
-            }
-            $newData['password'] = $this->createPassword($password_new1);
-        }
-
-        if ($this->save($newData)) {
-            $user = &$_SESSION[$_SESSION['token']];
-            $user = array_merge($user, $newData);
-            return $this->sendResponse($newData, 'update');
-        }
-        return static::refuseData('Something went wrong, we cannot save your data!');
     }
 
     protected function admin_edit($data) {

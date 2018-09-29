@@ -130,11 +130,10 @@ body, html {
 			-o-background-size: cover;
 			background-size: cover;
 			overflow: hidden;
-			text-align:center;
+			text-align: center;
 		}
 
 			.grid header picture .igevers {
-
 				display: inline-block;
 				position: relative;
 				top: 50%;
@@ -193,10 +192,6 @@ body, html {
 				opacity: 1;
 			}
 
-			.grid header .log-menu .logged, .grid header .log-menu  .guest {
-				disp1lay: none;
-			}
-
 	.grid nav {
 		grid-area: menu;
 		padding: 20px 10px;
@@ -223,7 +218,6 @@ body, html {
 			background-repeat: repeat;
 			border-radius: 10px;
 			font-family: 'Kalam', serif;
-			f1ont-weight: 100;
 			font-size: 24px;
 			border: 1px double rgba(0,0,0,0.5);
 			text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
@@ -342,20 +336,7 @@ body, html {
 					bottom: 50px;
 					text-align: left;
 				}
-/*
-				.stickyNote .more {
-					position: absolute;
-					display: inline-block;
-					bottom: 10px;
-					padding: 3px 6px;
-					left: 50%;
-					transform: translateX(-50%);
-				}
 
-				.stickyNote .more:hover {
-					cursor: pointer;
-				}
-*/
 	.grid aside {
 		align-self: center;
 		display: block;
@@ -417,8 +398,6 @@ body, html {
 			font-size: 16px;
 			color: #336;
 		}
-
-
 
 	.grid footer {
 		grid-area: footer;
@@ -775,14 +754,6 @@ body, html {
 	background: -webkit-linear-gradient(to right, #02111D, #037BB5, #02111D);
 	background: linear-gradient(to right, #02111D, #037BB5, #02111D);
 }
-
-
-#AddNews {z-index: 1000;min-width:200px;width:100%;max-width: 400px;height:480px; color:rgba(0,0,0,0.8);font-family: cursive;font-size: 16px;}
-#AddNews input, textarea {border: 1px solid rgba(0,0,0,0.2); width: 100%;color: rgba(0,0,0,0.5);font-size: 16px;font-family:arial;}
-#AddNews input:focus, textarea:focus {border: 1px solid rgba(0,0,255,0.2);color: rgba(0,0,0,0.8);}
-#AddNews input {height: 30px;padding: 2px 10px;}
-#AddNews textarea {resize: none;height: 200px;padding: 5px 10px;}
-#AddNews select {float: right;}
 
 /* Home page */
 .home .index main,
@@ -1761,13 +1732,13 @@ body, html {
 		position: absolute;
 		right: 0;
 		top: 0;
-		width: 40px;
-		height: 40px;
+		width: 60px;
+		height: 60px;
 		background-color: rgba(255,50,50,0.8);
 		border: 1px solid rgba(150,0,0,0.8);
 		color: #fff;
-		line-height: 40px;
-		font-size: 40px;
+		line-height: 60px;
+		font-size: 60px;
 		text-shadow: 1px 0 1px #000, -1px 0 1px #000, 0 -1px 1px #000, 0 1px 1px #000;
 		border-radius: 5px;
 		text-align: center;
