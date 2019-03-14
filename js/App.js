@@ -457,7 +457,7 @@
 		Api = {
 			YouTube: {
 				localData: {
-					key: 'AIzaSyAGUqUIMRRxZysmI-G2JvMjuK_QF1dqFS4',
+					key: 'your-api-key',
 					channelId: 'UCju4wi5kFZ80lV8QHrm8lXg',
 					part: 'snippet,contentDetails',
 					title: "Győzelem Gyülekezet",
@@ -3471,9 +3471,11 @@
 
 		function ImageManager (setup, req) {
 			let e, dom, selAlbum, description, thumbContainer, chckbx, files, selectedImage,
-				[currentAlbum, albumData, imageData] = pages.current.componentData[setup.relationship.viewer];
-			const albumId = pages.current.routeData.param.id || 0,
-			 	templates = {
+				[currentAlbum, albumData, imageData] = pages.current.componentData[setup.relationship.viewer],
+				slug = pages.current.routeData.param.slug || "",
+				album = pages.current.data[0][1].filter( e => e.slug === slug),
+				albumId = album.length > 0 ? album[0].id : 0;
+			const templates = {
 					main(setup) { return view.getContent ('adminSidePanelBone', ['imageManagerDiv',`
 									<h2> Szerkeszt </h2>
 									<div id="setImage_Form" data-method="POST" data-action="albums/add">

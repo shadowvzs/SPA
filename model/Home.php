@@ -27,7 +27,7 @@ class Home extends Model {
 			<br><br><h3>Facebook:</h3> <a href='https://www.facebook.com/gyozelemgyulekezet' target='_blank'><div class='facebook-icon icon-48'></div></a>
 			<br><br><h3>YouTube:</h3> <a href='https://www.youtube.com/channel/UCju4wi5kFZ80lV8QHrm8lXg' target='_blank'><div class='youtube-icon icon-48'></div></a>",
 		"home_about" =>
-			"<h2>Rólunk:</h2> Gyülekezetünk 15 éve jött létre és 7 helységben vannak gyülekezeteink: Nagyvárad, Szalonta, Székelyhíd, Mónospetri, Bogyoszló, Margitta, Érmihályfalva.<br><br>
+			"<h2>Rólunk:</h2> Gyülekezetünk 15 éve jött létre és 7 helységben vannak gyülekezeteink: Nagyvárad, Szalonta, Székelyhíd, Monospetri, Bogyoszló, Margitta, Érmihályfalva.<br><br>
 			<h2>Hitünk:</h2> Hiszünk az egy igaz Istenben, Jézus Krisztusban mint Isten fiában aki a mi megváltónk, a Szent Szellemben mint vígasztaló és tanító, a Bibliában mint Isten igéjeben ami Istentől ihletett útmutatónk.<br><br>
 			<h2>Hitvallás:</h2> Jézus nem vallást teremtett hanem keresztény életformát, ez egy helyreállításról szól Isten és emberközt, nem ember által alkotott tradiciókra épül hanem egy élő kapcsolatra.<br>Isten nem egy vallás, nem egy felekezet hanem egy személyes kapcsolat...<br><br>
 			<h2>Célunk:</h2> Célunk, hogy emberek megtérjenek, megtapasztálják a Isten szeretetét, áldásait amit Jézus Krisztusban kijelentett az egész világ számára....<br><br>",

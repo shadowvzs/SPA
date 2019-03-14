@@ -14,15 +14,15 @@ class Model {
 
 	protected static $DATABASE = [
 		"HOST" => 'localhost',	//getenv('IP'),
-		"USER" => 'root',		//getenv('C9_USER'),
-		"PASSWORD" => 'root',	//'root',
-		"DATABASE" => "kovacscsaba"
+		"USER" => '',		//getenv('C9_USER'),
+		"PASSWORD" => '',	//'root',
+		"DATABASE" => ''
 	];
 
 	protected static $PATTERN = [
 		'EMAIL' => '/^([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$)$/',
-		'NAME_HUN' => '/^([a-zA-Z0-9 ÁÉÍÓÖŐÚÜŰÔÕÛáéíóöőúüűôõû]+)$/',
-		'ADDRESS_HUN' => '/^([a-zA-Z0-9 ÁÉÍÓÖŐÚÜŰÔÕÛáéíóöőúüűôõû\,\.\-]+)$/',
+		'NAME_HUN' => '/^([a-zA-Z0-9 ÁÉÍÓÖŐÚÜŰÔ??áéíóöőúüűô??]+)$/',
+		'ADDRESS_HUN' => '/^([a-zA-Z0-9 ÁÉÍÓÖŐÚÜŰÔ??áéíóöőúüűô??\,\.\-]+)$/',
 		'NAME' => '/^([a-zA-Z0-9 \-]+)$/',
 		'INTEGER' => '/^([0-9]+)$/',
 		'SLUG' => '/^[a-zA-Z0-9-_]+$/',
@@ -167,16 +167,18 @@ class Model {
 	}
 
 	protected static function setDomainKey() {
-		static::$domain = $_SESSION['domain'] = md5(uniqid().time()).md5($_SERVER['REMOTE_ADDR'].'_'.uniqid());
+		static::$domain = md5(uniqid().time()).md5($_SERVER['REMOTE_ADDR'].'_'.uniqid());
+		$_SESSION['domain'] = static::$domain;
 	}
 
 	public function domainVerification() {
-		if (!empty($_SESSION['domain']) && static::$domain !== $_SESSION['domain']) {
-			$this->setAuthKey();
-			$this->refuseData("Helytelen kulcs!");
-		} else {
+
+		//if (!empty($_SESSION['domain']) && static::$domain !== $_SESSION['domain']) {
+			//$this->setAuthKey();
+			//$this->refuseData("Helytelen kulcs!");
+		//} else {
 			static::setDomainKey();
-		}
+		//}
 	}
 
 	protected function getParam($str, $type='ALPHA_NUM', $default){
